@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.admin.base.mapper.system.PermissionsMapper">
+    <select id="getPermissionByRoleId" resultType="com.admin.base.entity.system.Permissions">
+        select p.*
+        from tb_sys_role_permission as rp,
+             tb_sys_permissions as p
+        where rp.role_id = #{roleId,jdbcType=INTEGER}
+          and rp.permission_id = p.permission_id
+          and p.state = 1
+    </select>
+</mapper>

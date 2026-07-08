@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.admin.base.mapper.system.AdminRoleMapper">
+
+    <select id="selectRoleByAdminId" resultType="com.admin.base.entity.system.Role">
+        select r.* from tb_sys_admin_role as ar,tb_sys_role as r
+        where ar.admin_id=#{adminId,jdbcType=INTEGER}
+        and ar.role_id=r.role_id
+    </select>
+</mapper>

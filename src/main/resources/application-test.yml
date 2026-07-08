@@ -1,0 +1,34 @@
+spring:
+  #全局格式化Date类型的数据
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    name: adminBase
+    url: jdbc:mysql://192.168.3.3:3306/mark?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&useSSL=false
+    username: root
+    password: hjdz@10086
+  data:
+    redis:
+      database: 0
+      host: 192.168.3.3
+      port: 6379
+      password: hjdz@10086
+mybatis-plus:
+  #  #实体类扫描路径
+  #  type-aliases-package: com.admin.base
+  #xml 扫描路径
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true #驼峰命名
+logging:
+  level: {com.my: debug}
+sysconfig:
+  captchaType: math       #或者char
+  uploadPath: /Users/zhaoxin/uploadPath     #文件上传路径
+  downloadPath: /Users/zhaoxin/download     #文件下载路径
+  localStore: /home/local          # 本地资源路径
+  resourcePrefix: /profile         #资源映射路径
+  resultPath: /Users/zhaoxin/result         #识别结果存储路径
+  pdfPath: /Users/zhaoxin/Desktop/隐水印/pdf

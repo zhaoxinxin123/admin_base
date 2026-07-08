@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: admin
+  profiles:
+    active: test
+  servlet:
+    multipart:
+      max-request-size: 30MB
+      max-file-size: 30MB
+  main:
+    allow-bean-definition-overriding: true
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+server:
+  port: 9999
+  servlet:
+    context-path: /admin-api
+jwt:
+  tokenHead: Bearer
+  tokenHeader: Authorization
+  tokenPrefix: Bearer
+  secret: lanjwt
+  expiration: 7200
+
