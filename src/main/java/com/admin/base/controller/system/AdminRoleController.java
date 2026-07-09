@@ -91,7 +91,7 @@ public class AdminRoleController extends BaseController {
     @Log(title = "sys", businessType = BusinessType.UPDATE)
     public JsonResponse updateAdminState(@Validated UpdateAdminStateParam updateAdminStateParam) {
         if (AdminStatus.COMMON != updateAdminStateParam.getState() && AdminStatus.DISABLE != updateAdminStateParam.getState()) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_SYS_ERROR, "请确认参数"));
+            throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "请确认参数");
         }
         //在下次登录时有生效 因为Jwt 是无法失效的
         iAdminService.updateAdminState(updateAdminStateParam.getAdminId(), updateAdminStateParam.getState());

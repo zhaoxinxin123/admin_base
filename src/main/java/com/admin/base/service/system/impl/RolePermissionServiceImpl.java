@@ -3,7 +3,6 @@ package com.admin.base.service.system.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.admin.base.component.EntityInit;
 import com.admin.base.constant.ResponseCode;
-import com.admin.base.common.JsonResponse;
 import com.admin.base.entity.system.Permissions;
 import com.admin.base.entity.system.Role;
 import com.admin.base.entity.system.RolePermission;
@@ -80,7 +79,7 @@ public class RolePermissionServiceImpl extends ServiceImpl<RolePermissionMapper,
     @Transactional(rollbackFor = Exception.class)
     public void insertRolePermission(Integer roleId, List<Integer> permissionIds) {
         if (permissionIds.size() == 0) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_ALERT, "请赋予角色一定权限！"));
+            throw new BusinessException(ResponseCode.CODE_ALERT, "请赋予角色一定权限！");
         }
         for (Integer permissionId : permissionIds) {
             RolePermission rolePermission = EntityInit.initRolePermission(roleId, permissionId);

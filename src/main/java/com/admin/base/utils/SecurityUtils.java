@@ -1,6 +1,5 @@
 package com.admin.base.utils;
 
-import com.admin.base.common.JsonResponse;
 import com.admin.base.config.security.UserDetailsImpl;
 import com.admin.base.constant.ResponseCode;
 import com.admin.base.exception.BusinessException;
@@ -21,7 +20,7 @@ public class SecurityUtils {
         try {
             return getLoginUser().getAdminId();
         } catch (Exception e) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_NO_LOGIN, "获取用户ID异常"));
+            throw new BusinessException(ResponseCode.CODE_NO_LOGIN, "获取用户ID异常");
         }
     }
 
@@ -33,7 +32,7 @@ public class SecurityUtils {
         try {
             return getLoginUser().getUsername();
         } catch (Exception e) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_NO_LOGIN, "获取用户账户异常"));
+            throw new BusinessException(ResponseCode.CODE_NO_LOGIN, "获取用户账户异常");
         }
     }
 
@@ -46,7 +45,7 @@ public class SecurityUtils {
         try {
             return (UserDetailsImpl) getAuthentication().getDetails();
         } catch (Exception e) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_NO_LOGIN, "获取用户信息异常"));
+            throw new BusinessException(ResponseCode.CODE_NO_LOGIN, "获取用户信息异常");
         }
     }
 

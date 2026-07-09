@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.admin.base.component.EntityInit;
 import com.admin.base.dto.request.system.AddGlobalConfigParam;
 import com.admin.base.dto.request.system.UpdateGlobalConfigParam;
-import com.admin.base.common.JsonResponse;
 import com.admin.base.constant.ResponseCode;
 import com.admin.base.entity.system.GlobalConfig;
 import com.admin.base.exception.BusinessException;
@@ -46,7 +45,7 @@ public class GlobalConfigServiceImpl extends ServiceImpl<SysGlobalConfigMapper, 
     public void add(AddGlobalConfigParam addGlobalConfigParam) {
         final GlobalConfig globalConfig = selectByKey(addGlobalConfigParam.getKey());
         if (globalConfig != null) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_ALERT, "该key值已存在"));
+            throw new BusinessException(ResponseCode.CODE_ALERT, "该key值已存在");
         }
         GlobalConfig newGlobalConfig = EntityInit.initSysGlobalConfig(addGlobalConfigParam);
         this.baseMapper.insert(newGlobalConfig);
@@ -72,7 +71,7 @@ public class GlobalConfigServiceImpl extends ServiceImpl<SysGlobalConfigMapper, 
         final GlobalConfig globalConfigById = this.baseMapper.selectById(updateGlobalConfigParam.getConfigId());
         final GlobalConfig globalConfigByKey = selectByKey(updateGlobalConfigParam.getKey());
         if (globalConfigByKey != null && !globalConfigById.getConfigId().equals(globalConfigByKey.getConfigId())) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_ALERT, "该key值已存在"));
+            throw new BusinessException(ResponseCode.CODE_ALERT, "该key值已存在");
         }
         UpdateWrapper<GlobalConfig> updateWrapper = new UpdateWrapper<>();
         updateWrapper.lambda().eq(GlobalConfig::getConfigId, updateGlobalConfigParam.getConfigId())

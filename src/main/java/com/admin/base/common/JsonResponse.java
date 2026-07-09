@@ -3,84 +3,41 @@ package com.admin.base.common;
 import com.admin.base.constant.ResponseCode;
 import lombok.Data;
 
-/**
- * @author ZXX
- * @version 1.0
- * @date 2021/8/19 11:31 上午
- * @desc 统一响应
- */
 @Data
-public class JsonResponse {
+public class JsonResponse<T> {
 
-    /**
-     * 返回状态码
-     */
     private Integer code;
-
-    /**
-     * 返回信息
-     */
     private String msg;
+    private T data;
 
-    /**
-     * 返回数据
-     */
-    private Object data;
-
-
-    /**
-     * 返回成功数据
-     *
-     * @return 结果
-     */
-    public static JsonResponse success() {
-        JsonResponse jsonResponse = new JsonResponse();
-        jsonResponse.setCode(ResponseCode.CODE_OK);
-        jsonResponse.setMsg("成功");
-        return jsonResponse;
+    public static JsonResponse<Void> success() {
+        JsonResponse<Void> response = new JsonResponse<>();
+        response.setCode(ResponseCode.CODE_OK);
+        response.setMsg("成功");
+        return response;
     }
 
-
-    /**
-     * 返回成功数据
-     *
-     * @param data 数据
-     * @return 结果
-     */
-    public static JsonResponse success(Object data) {
-        JsonResponse jsonResponse = new JsonResponse();
-        jsonResponse.setCode(ResponseCode.CODE_OK);
-        jsonResponse.setMsg("成功");
-        jsonResponse.setData(data);
-        return jsonResponse;
-    }
-    /**
-     * 返回成功数据
-     *
-     * @param data 数据
-     * @return 结果
-     */
-    public static JsonResponse success(Object data,String msg) {
-        JsonResponse jsonResponse = new JsonResponse();
-        jsonResponse.setCode(ResponseCode.CODE_OK);
-        jsonResponse.setMsg(msg);
-        jsonResponse.setData(data);
-        return jsonResponse;
+    public static <T> JsonResponse<T> success(T data) {
+        JsonResponse<T> response = new JsonResponse<>();
+        response.setCode(ResponseCode.CODE_OK);
+        response.setMsg("成功");
+        response.setData(data);
+        return response;
     }
 
-    /**
-     * 返回失败数据
-     *
-     * @param code 状态码
-     * @param msg  返回信息
-     * @return 结果
-     */
-    public static JsonResponse error(Integer code, String msg) {
-        JsonResponse jsonResponse = new JsonResponse();
-        jsonResponse.setCode(code);
-        jsonResponse.setMsg(msg);
-        return jsonResponse;
+    public static <T> JsonResponse<T> success(T data, String msg) {
+        JsonResponse<T> response = new JsonResponse<>();
+        response.setCode(ResponseCode.CODE_OK);
+        response.setMsg(msg);
+        response.setData(data);
+        return response;
     }
 
+    public static JsonResponse<Void> error(Integer code, String msg) {
+        JsonResponse<Void> response = new JsonResponse<>();
+        response.setCode(code);
+        response.setMsg(msg);
+        return response;
+    }
 
 }
