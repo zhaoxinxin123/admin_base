@@ -4,13 +4,10 @@ import com.admin.base.constant.AdminStatus;
 import com.admin.base.constant.YesOrNo;
 import com.admin.base.dto.request.system.AddGlobalConfigParam;
 import com.admin.base.dto.request.system.AddPermissionParam;
-import com.admin.base.entity.keys.Keys;
-import com.admin.base.entity.keys.Records;
 import com.admin.base.entity.system.*;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * @author ZXX
@@ -81,29 +78,6 @@ public class EntityInit {
         globalConfig.setCreateTime(LocalDateTime.now());
         globalConfig.setUpdateTime(LocalDateTime.now());
         return globalConfig;
-    }
-
-
-    public static Keys initKeys(Integer userId,String keyWord, String note) throws NoSuchFieldException, IllegalAccessException {
-        Keys keys = new Keys();
-        keys.setKeyWord(keyWord);
-        keys.setUserId(userId);
-        keys.setNote(note);
-        final LocalDateTime now = LocalDateTime.now();
-        setDateFields(keys,now,now);
-        return keys;
-    }
-
-    public static Records initRecords(String fileName, Integer userId, List<String> keyWords,String resultPath,boolean resultFlag) throws NoSuchFieldException, IllegalAccessException {
-        Records records= new Records();
-        records.setFileName(fileName);
-        records.setUserId(userId);
-        records.setKeyWordList(keyWords.toString());
-        records.setResultPath(resultPath);
-        records.setResultState(resultFlag?1:0);
-        setDateFields(records,LocalDateTime.now(),LocalDateTime.now());
-        return records;
-
     }
 
 
