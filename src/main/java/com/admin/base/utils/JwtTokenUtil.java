@@ -1,6 +1,7 @@
 package com.admin.base.utils;
 
 
+import com.admin.base.config.security.TokenUser;
 import com.admin.base.config.security.UserDetailsImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import javax.crypto.SecretKey;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,22 +25,12 @@ import java.util.Map;
  * @author ZXX
  * @version 1.0
  * @date 2021/5/8 1:48 下午
- * @desc JWT token 工具类
+ * @desc JWT token 工具类 — upgraded to JJWT 0.12.6 API; uses TokenUser DTO for JSON claims
  */
 @Slf4j
 public class JwtTokenUtil implements Serializable {
-    /**
-     * 用户名
-     */
     private static final String CLAIM_KEY_USERNAME = "sub";
-
-    /**
-     * 权限
-     */
     private static final String CLAIM_KEY_DETAIL = "details";
-    /**
-     * 生成时间
-     */
     private static final String CLAIM_KEY_CREATED = "created";
 
     @Value("${jwt.secret}")
@@ -52,15 +44,21 @@ public class JwtTokenUtil implements Serializable {
             .registerModule(new JavaTimeModule());
 
     /**
-     * 从配置的 secret 字符串派生签名密钥，兼容 jjwt 0.12 API
+     * Derive a signing key from the configured secret string.
+     * Attempts Base64 decoding first (matching the JJWT 0.12
+     * recommended key format), falls back to raw UTF-8 bytes.
+     * JJWT 0.12 enforces HS256 key length ≥ 256 bits (32 bytes).
      */
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        byte[] keyBytes;
+        try {
+            keyBytes = Base64.getDecoder().decode(secret);
+        } catch (IllegalArgumentException e) {
+            keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        }
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    /**
-     * 生成Jwt的token
-     */
     private String generateToken(Map<String, Object> claims) {
         return Jwts.builder()
                 .claims(claims)
@@ -69,9 +67,6 @@ public class JwtTokenUtil implements Serializable {
                 .compact();
     }
 
-    /**
-     * 从token中获取JWT中的负载
-     */
     private Claims getClaimsFromToken(String token) {
         Claims claims = null;
         try {
@@ -86,16 +81,10 @@ public class JwtTokenUtil implements Serializable {
         return claims;
     }
 
-    /**
-     * 生成token的过期时间
-     */
     private Date generateExpirationDate() {
         return new Date(System.currentTimeMillis() + expiration * 1000);
     }
 
-    /**
-     * 从token中获取登陆用户名
-     */
     public String getUserNameFromToken(String token) {
         String username;
         try {
@@ -107,54 +96,41 @@ public class JwtTokenUtil implements Serializable {
         return username;
     }
 
-    /**
-     * 验证token是否还有效
-     *
-     * @param token       客户端传入的token
-     * @param userDetails 从数据库中查询出来的用户信息
-     */
     public boolean validateToken(String token, UserDetails userDetails) {
         String name = getUserNameFromToken(token);
         return name.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
-    /**
-     * 判断token是否已经失效
-     */
     private boolean isTokenExpired(String token) {
         Date fromToken = getExpiredDateFromToken(token);
         return fromToken.before(new Date());
     }
 
-    /**
-     * 从token中获取过期时间
-     */
     private Date getExpiredDateFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
         return claims.getExpiration();
     }
 
     /**
-     * 根据用户信息生成token，将 UserDetails 序列化为 JSON 存入 claims
+     * Generate a JWT token from UserDetails.
+     * Serializes a lightweight TokenUser DTO (not full UserDetailsImpl)
+     * into the claims so the token payload is Jackson-roundtrippable.
      */
     public String generateToken(UserDetails userDetails) {
+        UserDetailsImpl impl = (UserDetailsImpl) userDetails;
+        TokenUser tokenUser = TokenUser.from(impl);
         Map<String, Object> claims = new HashMap<>();
-        claims.put(CLAIM_KEY_USERNAME, userDetails.getUsername());
+        claims.put(CLAIM_KEY_USERNAME, tokenUser.username());
         claims.put(CLAIM_KEY_CREATED, new Date());
         try {
-            claims.put(CLAIM_KEY_DETAIL, objectMapper.writeValueAsString(userDetails));
+            claims.put(CLAIM_KEY_DETAIL, objectMapper.writeValueAsString(tokenUser));
         } catch (JsonProcessingException e) {
-            log.error("Failed to serialize user details", e);
+            log.error("Failed to serialize token user", e);
             throw new RuntimeException("Token generation failed", e);
         }
         return generateToken(claims);
     }
 
-    /**
-     * 当原来的token没过期时是可以刷新的
-     *
-     * @param oldToken 带tokenHead的token
-     */
     public String refreshHeadToken(String oldToken) {
         if (StringUtils.isEmpty(oldToken)) {
             return null;
@@ -163,16 +139,13 @@ public class JwtTokenUtil implements Serializable {
         if (StringUtils.isEmpty(token)) {
             return null;
         }
-        //token校验不通过
         Claims claims = getClaimsFromToken(token);
         if (claims == null) {
             return null;
         }
-        //如果token已经过期，不支持刷新
         if (isTokenExpired(token)) {
             return null;
         }
-        //如果token在30分钟之内刚刷新过，返回原token
         if (tokenRefreshJustBefore(token, 30 * 60)) {
             return token;
         } else {
@@ -181,29 +154,30 @@ public class JwtTokenUtil implements Serializable {
         }
     }
 
-    /**
-     * 判断token在指定时间内是否刚刚刷新过
-     *
-     * @param token 原token
-     * @param time  指定时间（秒）
-     */
     private boolean tokenRefreshJustBefore(String token, int time) {
         Claims claims = getClaimsFromToken(token);
         Date created = claims.get(CLAIM_KEY_CREATED, Date.class);
         Date refreshDate = new Date();
-        //刷新时间在创建时间的指定时间内
         return refreshDate.after(created) && refreshDate.before(DateUtils.dateAddSeconds(created, time));
     }
 
     /**
-     * 从 token 中反序列化 UserDetails，使用 Jackson 替代 Gson
+     * Reconstruct UserDetails from token claims.
+     * Deserializes the lightweight TokenUser DTO and converts back
+     * to UserDetailsImpl — avoids direct Jackson deserialization of
+     * UserDetailsImpl which has complex nested types.
      */
     public UserDetails getUserDetail(String authToken) {
         Claims claims = getClaimsFromToken(authToken);
+        if (claims == null) {
+            return null;
+        }
         try {
-            return objectMapper.readValue(claims.get(CLAIM_KEY_DETAIL).toString(), UserDetailsImpl.class);
+            TokenUser tokenUser = objectMapper.readValue(
+                    claims.get(CLAIM_KEY_DETAIL).toString(), TokenUser.class);
+            return tokenUser.toUserDetails();
         } catch (JsonProcessingException e) {
-            log.error("Failed to deserialize user details from token", e);
+            log.error("Failed to deserialize token user", e);
             return null;
         }
     }

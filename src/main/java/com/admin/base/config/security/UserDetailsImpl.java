@@ -45,6 +45,9 @@ public class UserDetailsImpl implements UserDetails {
      */
     private List<String> perms;
 
+    /** No-arg constructor for Jackson/framework deserialization and TokenUser reconstruction */
+    public UserDetailsImpl() {
+    }
 
     public UserDetailsImpl(Admin admin, List<Role> roles, List<String> permissions) {
         this.password = admin.getPassword();

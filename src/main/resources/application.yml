@@ -20,6 +20,9 @@ jwt:
   tokenHead: Bearer
   tokenHeader: Authorization
   tokenPrefix: Bearer
-  secret: lanjwt
-  expiration: 7200
+  # JJWT 0.12 requires HS256 keys ≥ 256 bits (32 bytes).
+  # Provide a Base64-encoded key via JWT_SECRET env var in production.
+  # Default below is a 256-bit key for local/dev use only.
+  secret: ${JWT_SECRET:YnJvLXN0cmluZy1hZG1pbi1iYXNlLWp3dC1zZWNyZXQ=}
+  expiration: ${JWT_EXPIRATION_SECONDS:7200}
 
