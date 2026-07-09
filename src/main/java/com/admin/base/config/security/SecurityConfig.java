@@ -77,23 +77,16 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        // 调用 JwtUserDetailService实例执行实际校验
-        return username -> userDetailsService.loadUserByUsername(username);
-    }
-
     /**
-     * 调用loadUserByUsername获得UserDetail信息，在AbstractUserDetailsAuthenticationProvider里执行用户状态检查
-     *
-     * @return
+     * 调用 loadUserByUsername 获得 UserDetail 信息，
+     * 在 AbstractUserDetailsAuthenticationProvider 里执行用户状态检查。
+     * 直接复用已 @Autowired 注入的 UserDetailsServiceImpl 实例，
+     * 避免与 @Service("userDetailsService") 注册的 bean 同名冲突。
      */
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        // DaoAuthenticationProvider 从自定义的 userDetailsService.loadUserByUsername 方法获取UserDetails
-        authProvider.setUserDetailsService(userDetailsService());
-        // 设置密码编辑器
+        authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
