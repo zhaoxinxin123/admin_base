@@ -1,3 +1,5 @@
+-- Historical bootstrap script. New schema lives in docs/database/admin-base-schema-v2.sql.
+
 /*
  Navicat Premium Data Transfer
 
