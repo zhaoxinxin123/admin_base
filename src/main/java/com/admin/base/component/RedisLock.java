@@ -9,6 +9,9 @@ import jakarta.annotation.Resource;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Short-lived Redis lock used by repeat-submit protection.
+ * This component is not a general-purpose distributed lock abstraction.
+ *
  * @author ZXX
  * @version 1.0
  * @date 2021/8/24 11:47 上午
