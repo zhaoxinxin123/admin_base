@@ -1,32 +1,17 @@
 spring:
-  #全局格式化Date类型的数据
-  jackson:
-    date-format: yyyy-MM-dd HH:mm:ss
-    time-zone: Asia/Shanghai
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    name: makrBase
-    url: jdbc:mysql://127.0.0.1:3306/blind_water?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&useSSL=false
-    username: root
-    password: zxx970919.+@
-  redis:
-    database: 0
-    host: 127.0.0.1
-    port: 6379
+    name: adminBase
+    url: ${PROD_DATASOURCE_URL}
+    username: ${PROD_DATASOURCE_USERNAME}
+    password: ${PROD_DATASOURCE_PASSWORD}
+  data:
+    redis:
+      database: ${PROD_REDIS_DATABASE:0}
+      host: ${PROD_REDIS_HOST}
+      port: ${PROD_REDIS_PORT:6379}
+      password: ${PROD_REDIS_PASSWORD:}
 mybatis-plus:
-  #  #实体类扫描路径
-  type-aliases-package: com.admin.base.entity
-  #xml 扫描路径
   mapper-locations: classpath:mapper/*.xml
   configuration:
-    map-underscore-to-camel-case: true #驼峰命名
-logging:
-  level: {com.my: debug}
-sysconfig:
-  captchaType: math       #或者char
-  uploadPath: /home/uploadPath     #文件上传路径
-  downloadPath: /home/download     #文件下载路径
-  localStore: /home/local          # 本地资源路径
-  resourcePrefix: /profile         #资源映射路径
-  resultPath: /home/result         #识别结果存储路径
-  pdfPath: /usr/share/nginx/html/pdf
+    map-underscore-to-camel-case: true
