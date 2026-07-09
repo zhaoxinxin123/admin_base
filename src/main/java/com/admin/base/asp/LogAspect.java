@@ -37,7 +37,7 @@ import java.util.Map;
  * @author ZXX
  * @version 1.0
  * @date 2021/9/22 9:54 下午
- * @desc 操作日志记录 — replaced Gson with Jackson
+ * @desc 操作日志记录 — 已替换 Gson 为 Jackson
  */
 @Aspect
 @Component
@@ -90,7 +90,7 @@ public class LogAspect {
 
             String ip = RequestUtils.getCurrentRequest().getRemoteAddr();
             operationLog.setOperationIp(ip);
-            // 返回参数 — use Jackson for serialization
+            // 返回参数 — 使用 Jackson 序列化
             try {
                 operationLog.setJsonResult(objectMapper.writeValueAsString(jsonResult));
             } catch (JsonProcessingException ex) {
@@ -176,7 +176,7 @@ public class LogAspect {
     }
 
     /**
-     * 参数拼装 — use Jackson instead of Gson
+     * 参数拼装 — 使用 Jackson 替代 Gson
      */
     private String argsArrayToString(Object[] paramsArray) {
         StringBuilder params = new StringBuilder();

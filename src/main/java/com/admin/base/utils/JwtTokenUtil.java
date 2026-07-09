@@ -25,7 +25,7 @@ import java.util.Map;
  * @author ZXX
  * @version 1.0
  * @date 2021/5/8 1:48 下午
- * @desc JWT token 工具类 — upgraded to JJWT 0.12.6 API; uses TokenUser DTO for JSON claims
+ * @desc JWT token 工具类 — 已升级至 JJWT 0.12.6 API；使用 TokenUser DTO 序列化 claims
  */
 @Slf4j
 public class JwtTokenUtil implements Serializable {
@@ -44,10 +44,10 @@ public class JwtTokenUtil implements Serializable {
             .registerModule(new JavaTimeModule());
 
     /**
-     * Derive a signing key from the configured secret string.
-     * Attempts Base64 decoding first (matching the JJWT 0.12
-     * recommended key format), falls back to raw UTF-8 bytes.
-     * JJWT 0.12 enforces HS256 key length ≥ 256 bits (32 bytes).
+     * 从配置的 jwt.secret 派生签名密钥。
+     * 优先尝试 Base64 解码（符合 JJWT 0.12 推荐的密钥格式），
+     * 解码失败则回退为原始 UTF-8 字节。
+     * JJWT 0.12 强制要求 HS256 密钥长度 ≥ 256 bits（32 字节）。
      */
     private SecretKey getSigningKey() {
         byte[] keyBytes;
@@ -112,9 +112,9 @@ public class JwtTokenUtil implements Serializable {
     }
 
     /**
-     * Generate a JWT token from UserDetails.
-     * Serializes a lightweight TokenUser DTO (not full UserDetailsImpl)
-     * into the claims so the token payload is Jackson-roundtrippable.
+     * 根据 UserDetails 生成 JWT token。
+     * 将轻量级 TokenUser DTO（而非完整的 UserDetailsImpl）序列化到 claims 中，
+     * 确保 token payload 可被 Jackson 正常往返序列化/反序列化。
      */
     public String generateToken(UserDetails userDetails) {
         UserDetailsImpl impl = (UserDetailsImpl) userDetails;
@@ -162,10 +162,9 @@ public class JwtTokenUtil implements Serializable {
     }
 
     /**
-     * Reconstruct UserDetails from token claims.
-     * Deserializes the lightweight TokenUser DTO and converts back
-     * to UserDetailsImpl — avoids direct Jackson deserialization of
-     * UserDetailsImpl which has complex nested types.
+     * 从 token claims 中重建 UserDetails。
+     * 先反序列化轻量级 TokenUser DTO，再转换为 UserDetailsImpl，
+     * 避免直接对 UserDetailsImpl 做 Jackson 反序列化（其含复杂嵌套类型，不可被 Jackson 构造）。
      */
     public UserDetails getUserDetail(String authToken) {
         Claims claims = getClaimsFromToken(authToken);

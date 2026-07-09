@@ -30,7 +30,7 @@ import java.io.IOException;
  * @author ZXX
  * @version 1.0
  * @date 2021/9/12 2:09 下午
- * @desc JWT authentication filter — uses UserDetailsService for full authorities
+ * @desc JWT 认证过滤器 — 通过 UserDetailsService 加载完整角色权限
  */
 @Slf4j
 public class MyTokenFilter extends GenericFilterBean {
@@ -87,8 +87,8 @@ public class MyTokenFilter extends GenericFilterBean {
 
             log.debug("checking{} Jwt中token是否过期", username);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Load full UserDetails with roles from UserDetailsService
-                // (token payload carries only identity, not roles)
+                // 通过 UserDetailsService 加载带 roles 的完整 UserDetails
+                //（token payload 仅携带身份信息，不包含 roles）
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 if (jwtTokenUtil.validateToken(authToken, userDetails)) {
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(

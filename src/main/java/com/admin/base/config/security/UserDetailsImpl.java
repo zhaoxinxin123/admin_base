@@ -45,7 +45,7 @@ public class UserDetailsImpl implements UserDetails {
      */
     private List<String> perms;
 
-    /** No-arg constructor for Jackson/framework deserialization and TokenUser reconstruction */
+    /** 无参构造器，供 Jackson 反序列化及 TokenUser 重建使用 */
     public UserDetailsImpl() {
     }
 
