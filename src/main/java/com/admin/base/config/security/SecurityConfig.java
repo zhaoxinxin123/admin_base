@@ -8,7 +8,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -27,7 +28,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  */
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
+@EnableMethodSecurity
+@EnableConfigurationProperties(AuthModeProperties.class)
 public class SecurityConfig {
 
     @Autowired
@@ -39,6 +41,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // OAuth2/OIDC 模式为后续实现计划预留，Phase 1 仅 JWT 模式为可执行安全链
         http
                 // 禁用basic明文验证
                 .httpBasic(AbstractHttpConfigurer::disable)
@@ -74,23 +77,16 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Bean
-    public UserDetailsService userDetailsService() {
-        // 调用 JwtUserDetailService实例执行实际校验
-        return username -> userDetailsService.loadUserByUsername(username);
-    }
-
     /**
-     * 调用loadUserByUsername获得UserDetail信息，在AbstractUserDetailsAuthenticationProvider里执行用户状态检查
-     *
-     * @return
+     * 调用 loadUserByUsername 获得 UserDetail 信息，
+     * 在 AbstractUserDetailsAuthenticationProvider 里执行用户状态检查。
+     * 直接复用已 @Autowired 注入的 UserDetailsServiceImpl 实例，
+     * 避免与 @Service("userDetailsService") 注册的 bean 同名冲突。
      */
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        // DaoAuthenticationProvider 从自定义的 userDetailsService.loadUserByUsername 方法获取UserDetails
-        authProvider.setUserDetailsService(userDetailsService());
-        // 设置密码编辑器
+        authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
