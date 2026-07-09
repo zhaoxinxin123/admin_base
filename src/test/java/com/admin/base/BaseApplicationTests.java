@@ -7,6 +7,7 @@ import com.admin.base.dto.response.system.CaptchaResponse;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,6 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
+@Disabled("Replaced by focused baseline tests during modernization phase 1")
 @SpringBootTest(classes = BaseApplication.class)
 @AutoConfigureMockMvc
 @ExtendWith(MockitoExtension.class)
