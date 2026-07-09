@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- KYL-17: Switch to Spring Boot parent for unified dependency/plugin management -->
+    <!-- KYL-17: 切换至 Spring Boot parent 统一依赖与插件版本管理 -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -92,7 +92,7 @@
             <version>1.2.22</version>
         </dependency>
 
-        <!-- JWT: upgraded from jjwt 0.9.1 to maintained JJWT 0.12.6 modules -->
+        <!-- JWT: 从 jjwt 0.9.1 升级至 JJWT 0.12.6 维护版本 -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>

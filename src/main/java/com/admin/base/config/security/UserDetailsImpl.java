@@ -45,6 +45,9 @@ public class UserDetailsImpl implements UserDetails {
      */
     private List<String> perms;
 
+    /** 无参构造器，供 Jackson 反序列化及 TokenUser 重建使用 */
+    public UserDetailsImpl() {
+    }
 
     public UserDetailsImpl(Admin admin, List<Role> roles, List<String> permissions) {
         this.password = admin.getPassword();

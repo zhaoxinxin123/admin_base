@@ -16,9 +16,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.GenericFilterBean;
 
 import jakarta.annotation.Resource;
@@ -28,7 +30,7 @@ import java.io.IOException;
  * @author ZXX
  * @version 1.0
  * @date 2021/9/12 2:09 下午
- * @desc JWT authentication filter — replaced Gson with Jackson
+ * @desc JWT 认证过滤器 — 通过 UserDetailsService 加载完整角色权限
  */
 @Slf4j
 public class MyTokenFilter extends GenericFilterBean {
@@ -37,6 +39,9 @@ public class MyTokenFilter extends GenericFilterBean {
     private JwtTokenUtil jwtTokenUtil;
     @Resource
     private ICacheService cacheService;
+    @Autowired
+    @Lazy
+    private UserDetailsService userDetailsService;
     @Value("${jwt.tokenHeader}")
     private String tokenHeader;
     @Value("${jwt.tokenHead}")
@@ -82,13 +87,13 @@ public class MyTokenFilter extends GenericFilterBean {
 
             log.debug("checking{} Jwt中token是否过期", username);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                //个人认为如果使用Redis进行单点登录的话，就不用jwt了，可以在登录的时候把 userDetails  放入redis
-                UserDetails userDetails = jwtTokenUtil.getUserDetail(authToken);
+                // 通过 UserDetailsService 加载带 roles 的完整 UserDetails
+                //（token payload 仅携带身份信息，不包含 roles）
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 if (jwtTokenUtil.validateToken(authToken, userDetails)) {
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails.getUsername(), null, userDetails.getAuthorities());
-                    authentication.setDetails(userDetails);
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
                     log.debug("authenticated user:{}", username);
-                    //添加用户权限
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }

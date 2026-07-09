@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-@Disabled("Replaced by focused baseline tests during modernization phase 1")
+@Disabled("现代化改造 Phase 1 期间由聚焦基线测试替代")
 @SpringBootTest(classes = BaseApplication.class)
 @AutoConfigureMockMvc
 @ExtendWith(MockitoExtension.class)
