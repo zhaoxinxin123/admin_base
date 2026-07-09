@@ -32,6 +32,7 @@ import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author ZXX
@@ -45,6 +46,28 @@ import java.util.Map;
 public class LogAspect {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final Set<String> SENSITIVE_KEYS = Set.of(
+            "password",
+            "oldPassword",
+            "newPassword",
+            "token",
+            "authorization",
+            "code",
+            "uuid",
+            "file"
+    );
+
+    String sanitizeLogPayload(String payload) {
+        if (payload == null || payload.isBlank()) {
+            return payload;
+        }
+        String sanitized = payload;
+        for (String key : SENSITIVE_KEYS) {
+            sanitized = sanitized.replaceAll("(?i)(\"" + key + "\"\\s*:\\s*\")([^\"]*)(\")", "$1***$3");
+        }
+        return sanitized;
+    }
 
     // 配置织入点
     @Pointcut("@annotation(com.admin.base.annotation.Log)")
@@ -154,10 +177,10 @@ public class LogAspect {
         String requestMethod = operationLog.getRequestMethod();
         if (HttpMethod.PUT.name().equals(requestMethod) || HttpMethod.POST.name().equals(requestMethod)) {
             String params = argsArrayToString(joinPoint.getArgs());
-            operationLog.setOperationParam(StringUtils.substring(params, 0, 2000));
+            operationLog.setOperationParam(sanitizeLogPayload(StringUtils.substring(params, 0, 2000)));
         } else {
             Map<?, ?> paramsMap = (Map<?, ?>) ServletUtils.getRequest().getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
-            operationLog.setOperationParam(StringUtils.substring(paramsMap.toString(), 0, 2000));
+            operationLog.setOperationParam(sanitizeLogPayload(StringUtils.substring(paramsMap.toString(), 0, 2000)));
         }
     }
 
