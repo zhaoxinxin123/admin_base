@@ -12,11 +12,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * 安全边界测试，使用 dev profile 连接 192.168.3.3 的 MySQL/Redis。
+ * 安全边界测试，使用 test profile 连接 192.168.3.3 的 MySQL/Redis。
  */
 @SpringBootTest(classes = BaseApplication.class)
 @AutoConfigureMockMvc
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 class SecurityBoundaryTest {
 
     @Autowired

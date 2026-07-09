@@ -15,11 +15,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * 安全配置测试 — 验证 JWT 安全过滤器链的正确性。
- * 使用 dev profile 连接 192.168.3.3 的 MySQL/Redis。
+ * 使用 test profile 连接 192.168.3.3 的 MySQL/Redis。
  */
 @SpringBootTest(classes = BaseApplication.class)
 @AutoConfigureMockMvc
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 class SecurityConfigTest {
 
     @Autowired

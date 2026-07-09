@@ -1,14 +1,18 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${TEST_DATASOURCE_URL:jdbc:mysql://127.0.0.1:3306/admin_base_test?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&useSSL=false}
+    url: ${TEST_DATASOURCE_URL:jdbc:mysql://192.168.3.3:3306/mark?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&useSSL=false}
     username: ${TEST_DATASOURCE_USERNAME:root}
-    password: ${TEST_DATASOURCE_PASSWORD:}
+    password: ${TEST_DATASOURCE_PASSWORD:hjdz@10086}
   data:
     redis:
-      host: ${TEST_REDIS_HOST:127.0.0.1}
+      host: ${TEST_REDIS_HOST:192.168.3.3}
       port: ${TEST_REDIS_PORT:6379}
-      password: ${TEST_REDIS_PASSWORD:}
+      password: ${TEST_REDIS_PASSWORD:hjdz@10086}
 admin:
   auth:
     mode: jwt
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
