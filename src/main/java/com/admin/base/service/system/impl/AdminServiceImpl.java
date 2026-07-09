@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.admin.base.component.EntityInit;
 import com.admin.base.constant.RedisPrefix;
 import com.admin.base.constant.ResponseCode;
-import com.admin.base.common.JsonResponse;
 import com.admin.base.component.ResponseInit;
 import com.admin.base.config.security.UserDetailsImpl;
 import com.admin.base.config.security.UserDetailsServiceImpl;
@@ -71,7 +70,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
         adminQueryWrapper.lambda().eq(Admin::getUserName, username);
         final Admin admin = this.baseMapper.selectOne(adminQueryWrapper);
         if (admin == null) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_SYS_ERROR, "不存在该管理员！"));
+            throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "不存在该管理员！");
         }
         return admin;
     }
@@ -84,7 +83,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
         adminQueryWrapper.lambda().eq(Admin::getUserName, username);
         final Long count = this.baseMapper.selectCount(adminQueryWrapper);
         if (count > 0) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_SYS_ERROR, "该账号已存在，请重新设置！"));
+            throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "该账号已存在，请重新设置！");
         }
         Admin admin = EntityInit.initAdmin(username, passwordEncoder.encode(password), password, nickName);
         Integer adminId = this.baseMapper.insertAdmin(admin);
@@ -103,7 +102,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
     public void deleteAdmin(Integer adminId) {
         Admin admin = this.baseMapper.selectById(adminId);
         if (admin == null) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_SYS_ERROR, "账号不存在"));
+            throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "账号不存在");
         }
         //判断账号是否为自己
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -111,7 +110,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
         String username = userDetails.getUsername();
         Admin selectByUserName = selectByUserName(username);
         if (selectByUserName.getAdminId().equals(adminId)) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_SYS_ERROR, "不能删除自己"));
+            throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "不能删除自己");
         }
         //删除
         this.baseMapper.deleteById(adminId);
@@ -153,7 +152,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
 //        UserDetailsImpl userDetails = (UserDetailsImpl) this.userDetailsService.loadUserByUsername(loginParam.getUsername());
         log.debug(userDetails.getUsername() + "---------");
         if (!passwordEncoder.matches(loginParam.getPassword(), userDetails.getPassword())) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_SYS_ERROR, "用户名或密码错误"));
+            throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "用户名或密码错误");
         }
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -173,10 +172,10 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
         String verifyKey = RedisPrefix.CAPTCHA_CODE_KEY + uuid;
         String captcha = iCacheService.getValueByKey(verifyKey);
         if (StringUtils.isEmpty(captcha)) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_ALERT, "验证码失效，请重新获取！"));
+            throw new BusinessException(ResponseCode.CODE_ALERT, "验证码失效，请重新获取！");
         }
         if (!code.equals(captcha)) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_ALERT, "验证码错误！"));
+            throw new BusinessException(ResponseCode.CODE_ALERT, "验证码错误！");
         }
     }
 

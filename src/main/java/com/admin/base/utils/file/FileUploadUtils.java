@@ -1,6 +1,5 @@
 package com.admin.base.utils.file;
 
-import com.admin.base.common.JsonResponse;
 import com.admin.base.constant.ResponseCode;
 import com.admin.base.exception.BusinessException;
 import com.admin.base.utils.uuid.IdUtils;
@@ -89,7 +88,7 @@ public class FileUploadUtils {
             throws FileSizeLimitExceededException, IOException {
         int fileNameLength = file.getOriginalFilename().length();
         if (fileNameLength > FileUploadUtils.DEFAULT_FILE_NAME_LENGTH) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_SYS_ERROR, "文件名太长"));
+            throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "文件名太长");
         }
 
 

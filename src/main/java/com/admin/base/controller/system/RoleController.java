@@ -94,11 +94,11 @@ public class RoleController extends BaseController {
     public void checkRoleName(String roleName) {
         String rolePrefix = "ROLE_";
         if (!roleName.contains(rolePrefix)) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_ALERT, "角色名必须已ROLE_开头"));
+            throw new BusinessException(ResponseCode.CODE_ALERT, "角色名必须已ROLE_开头");
         }
         int maxlength = 11;
         if (roleName.length() > maxlength) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_ALERT, "角色名长度不能大于10"));
+            throw new BusinessException(ResponseCode.CODE_ALERT, "角色名长度不能大于10");
         }
     }
 }

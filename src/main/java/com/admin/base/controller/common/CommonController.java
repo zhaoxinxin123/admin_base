@@ -35,7 +35,7 @@ public class CommonController {
     public void fileDownload(String fileName, Integer type, Boolean delete, HttpServletResponse response) {
         try {
             if (FileUtils.checkAllowDownload(fileName)) {
-                throw new BusinessException(JsonResponse.error(ResponseCode.CODE_SYS_ERROR, "文件名称非法，不允许下下载"));
+                throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "文件名称非法，不允许下下载");
             }
             String realFileName = System.currentTimeMillis() + fileName.substring(fileName.indexOf("_") + 1);
             String filePath = getFilePath(fileName, type);
@@ -88,7 +88,7 @@ public class CommonController {
     public void resourceDownloadTest(String resource, HttpServletResponse response) {
         try {
             if (FileUtils.checkAllowDownload(resource)) {
-                throw new BusinessException(JsonResponse.error(ResponseCode.CODE_SYS_ERROR, "文件名称非法，不允许下下载"));
+                throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "文件名称非法，不允许下下载");
             }
             // 本地资源路径
             String localPath = SysConfig.getDownloadPath() + "/" + resource;

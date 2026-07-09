@@ -1,22 +1,14 @@
 package com.admin.base.exception;
 
-import com.admin.base.common.JsonResponse;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
-/**
- * @author ZXX
- * @version 1.0
- * @date 2021/8/24 11:41 下午
- * @desc
- */
-@EqualsAndHashCode(callSuper = true)
-@Data
-public class BusinessException extends RuntimeException{
-    private JsonResponse jsonResponse;
+@Getter
+public class BusinessException extends RuntimeException {
 
+    private final Integer code;
 
-    public BusinessException(JsonResponse jsonResponse) {
-        this.jsonResponse = jsonResponse;
+    public BusinessException(Integer code, String message) {
+        super(message);
+        this.code = code;
     }
 }

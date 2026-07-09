@@ -9,7 +9,7 @@ class JsonResponseTest {
 
     @Test
     void successKeepsCompatibleShape() {
-        JsonResponse response = JsonResponse.success("ok");
+        JsonResponse<Object> response = JsonResponse.success("ok");
 
         assertThat(response.getCode()).isEqualTo(ResponseCode.CODE_OK);
         assertThat(response.getMsg()).isEqualTo("成功");
@@ -18,10 +18,17 @@ class JsonResponseTest {
 
     @Test
     void errorKeepsCompatibleShape() {
-        JsonResponse response = JsonResponse.error(ResponseCode.CODE_SYS_ERROR, "系统繁忙");
+        JsonResponse<Void> response = JsonResponse.error(ResponseCode.CODE_SYS_ERROR, "系统繁忙");
 
         assertThat(response.getCode()).isEqualTo(ResponseCode.CODE_SYS_ERROR);
         assertThat(response.getMsg()).isEqualTo("系统繁忙");
         assertThat(response.getData()).isNull();
+    }
+
+    @Test
+    void genericResponseCarriesTypedData() {
+        JsonResponse<String> response = JsonResponse.success("typed");
+
+        assertThat(response.getData()).isEqualTo("typed");
     }
 }
