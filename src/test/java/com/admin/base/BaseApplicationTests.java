@@ -65,7 +65,7 @@ class BaseApplicationTests {
         String content = mvcResult.getResponse().getContentAsString();//可以拿到返回的内容
         JsonResponse response = objectMapper.readValue(content, JsonResponse.class);
         System.out.println(response.toString());
-        CaptchaResponse captchaResponse = objectMapper.readValue(response.getData().toString(), CaptchaResponse.class);
+        CaptchaResponse captchaResponse = objectMapper.convertValue(response.getData(), CaptchaResponse.class);
         System.out.println(captchaResponse.toString());
     }
 

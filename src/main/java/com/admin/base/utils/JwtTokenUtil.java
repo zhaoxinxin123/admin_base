@@ -1,18 +1,20 @@
 package com.admin.base.utils;
 
 
-import com.google.gson.Gson;
 import com.admin.base.config.security.UserDetailsImpl;
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import javax.crypto.SecretKey;
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +23,7 @@ import java.util.Map;
  * @author ZXX
  * @version 1.0
  * @date 2021/5/8 1:48 下午
- * @desc
+ * @desc JWT token 工具类
  */
 @Slf4j
 public class JwtTokenUtil implements Serializable {
@@ -38,6 +40,7 @@ public class JwtTokenUtil implements Serializable {
      * 生成时间
      */
     private static final String CLAIM_KEY_CREATED = "created";
+
     @Value("${jwt.secret}")
     private String secret;
     @Value("${jwt.expiration}")
@@ -45,14 +48,24 @@ public class JwtTokenUtil implements Serializable {
     @Value("${jwt.tokenHead}")
     private String tokenHead;
 
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
+
+    /**
+     * 从配置的 secret 字符串派生签名密钥，兼容 jjwt 0.12 API
+     */
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
+
     /**
      * 生成Jwt的token
      */
     private String generateToken(Map<String, Object> claims) {
         return Jwts.builder()
-                .setClaims(claims)
-                .setExpiration(generateExpirationDate())
-                .signWith(SignatureAlgorithm.HS256, secret)
+                .claims(claims)
+                .expiration(generateExpirationDate())
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -63,9 +76,10 @@ public class JwtTokenUtil implements Serializable {
         Claims claims = null;
         try {
             claims = Jwts.parser()
-                    .setSigningKey(secret)
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
         } catch (Exception e) {
             log.info("JWT格式验证失败:{}", token);
         }
@@ -117,21 +131,22 @@ public class JwtTokenUtil implements Serializable {
      */
     private Date getExpiredDateFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
-
         return claims.getExpiration();
     }
 
     /**
-     * 根据用户信息生成token
+     * 根据用户信息生成token，将 UserDetails 序列化为 JSON 存入 claims
      */
     public String generateToken(UserDetails userDetails) {
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-                .create();
         Map<String, Object> claims = new HashMap<>();
         claims.put(CLAIM_KEY_USERNAME, userDetails.getUsername());
         claims.put(CLAIM_KEY_CREATED, new Date());
-        claims.put(CLAIM_KEY_DETAIL, gson.toJson(userDetails));
+        try {
+            claims.put(CLAIM_KEY_DETAIL, objectMapper.writeValueAsString(userDetails));
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize user details", e);
+            throw new RuntimeException("Token generation failed", e);
+        }
         return generateToken(claims);
     }
 
@@ -180,12 +195,16 @@ public class JwtTokenUtil implements Serializable {
         return refreshDate.after(created) && refreshDate.before(DateUtils.dateAddSeconds(created, time));
     }
 
-
+    /**
+     * 从 token 中反序列化 UserDetails，使用 Jackson 替代 Gson
+     */
     public UserDetails getUserDetail(String authToken) {
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-                .create();
         Claims claims = getClaimsFromToken(authToken);
-        return gson.fromJson(claims.get(CLAIM_KEY_DETAIL).toString(), UserDetailsImpl.class);
+        try {
+            return objectMapper.readValue(claims.get(CLAIM_KEY_DETAIL).toString(), UserDetailsImpl.class);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to deserialize user details from token", e);
+            return null;
+        }
     }
 }
