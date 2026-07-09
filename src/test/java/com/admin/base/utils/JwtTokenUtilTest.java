@@ -62,6 +62,10 @@ class JwtTokenUtilTest {
         assertThat(restoredImpl.getNickName()).isEqualTo("管理员");
         assertThat(restoredImpl.getAdminId()).isEqualTo(1);
         assertThat(restoredImpl.getPerms()).containsExactly("sys:adminList", "sys:roleList");
+
+        // Verify getAuthorities() does not throw NPE (roles defaulted to empty list)
+        assertThat(restoredImpl.getAuthorities()).isNotNull();
+        assertThat(restoredImpl.getAuthorities()).isNotEmpty();
     }
 
     @Test

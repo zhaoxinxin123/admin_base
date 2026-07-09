@@ -1,5 +1,6 @@
 package com.admin.base.config.security;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,6 +20,7 @@ public record TokenUser(
      * Reconstruct a full UserDetailsImpl from this token payload.
      * Roles are not persisted in the token — they are reloaded from
      * the database on each request via UserDetailsService.
+     * roles defaults to empty list to prevent NPE in getAuthorities().
      */
     public UserDetailsImpl toUserDetails() {
         UserDetailsImpl impl = new UserDetailsImpl();
@@ -27,6 +29,7 @@ public record TokenUser(
         impl.setNickName(nickName);
         impl.setAdminId(adminId);
         impl.setPerms(perms);
+        impl.setRoles(new ArrayList<>());
         return impl;
     }
 
