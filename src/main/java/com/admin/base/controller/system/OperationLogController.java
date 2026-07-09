@@ -1,7 +1,7 @@
 package com.admin.base.controller.system;
 
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.admin.base.common.PageResult;
 import com.admin.base.dto.request.system.DeleteOperationLogParam;
 import com.admin.base.dto.request.system.OperationLogListParam;
 import com.admin.base.annotation.Log;
@@ -34,8 +34,8 @@ public class OperationLogController extends BaseController {
     private IOperationLogService iOperationLogService;
     @PostMapping("/list")
     public JsonResponse list(@Validated OperationLogListParam operationListParam) {
-        IPage<OperationLog> iPage= iOperationLogService.listPage(operationListParam);
-        final Map<String, Object> dataTable = getDataTable(iPage, 6);
+        PageResult<OperationLog> pageResult = iOperationLogService.listPage(operationListParam);
+        final Map<String, Object> dataTable = getDataTable(pageResult, 6);
         return JsonResponse.success(dataTable);
     }
 

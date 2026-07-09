@@ -3,6 +3,7 @@ package com.admin.base.service.system.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.admin.base.common.PageResult;
 import com.admin.base.dto.request.system.OperationLogListParam;
 import com.admin.base.entity.system.OperationLog;
 import com.admin.base.mapper.SysOperationLogMapper;
@@ -30,7 +31,7 @@ public class OperationLogServiceImpl extends ServiceImpl<SysOperationLogMapper, 
     }
 
     @Override
-    public IPage<OperationLog> listPage(OperationLogListParam operationListParam) {
+    public PageResult<OperationLog> listPage(OperationLogListParam operationListParam) {
         IPage<OperationLog> iPage = new Page<>(operationListParam.getPage(), operationListParam.getSize());
         QueryWrapper<OperationLog> queryWrapper = new QueryWrapper<>();
         queryWrapper.lambda()
@@ -40,7 +41,8 @@ public class OperationLogServiceImpl extends ServiceImpl<SysOperationLogMapper, 
                 .gt(operationListParam.getStartTime() != null, OperationLog::getOperationTime, operationListParam.getStartTime())
                 .lt(operationListParam.getEndTime() != null, OperationLog::getOperationTime, operationListParam.getStartTime())
                 .orderByDesc(OperationLog::getOperationTime);
-        return this.baseMapper.selectPage(iPage, queryWrapper);
+        IPage<OperationLog> pageResult = this.baseMapper.selectPage(iPage, queryWrapper);
+        return new PageResult<>(pageResult.getRecords(), pageResult.getTotal(), operationListParam.getPage(), operationListParam.getSize());
     }
 
     @Override

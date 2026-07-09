@@ -1,7 +1,7 @@
 package com.admin.base.controller.system;
 
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.admin.base.common.PageResult;
 import com.admin.base.common.JsonResponse;
 import com.admin.base.controller.common.BaseController;
 import com.admin.base.dto.request.common.PageParam;
@@ -56,13 +56,13 @@ public class RolePermissionController extends BaseController {
     @PostMapping("/manageList")
     @PreAuthorize("hasAuthority('sys:roleList')")
     public JsonResponse listRole(@Validated PageParam pageParam) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        final IPage<Role> rolePage = iRoleService.getRolePage(pageParam.getPage(), pageParam.getSize());
+        final PageResult<Role> rolePage = iRoleService.getRolePage(pageParam.getPage(), pageParam.getSize());
         final Map<String, Object> dataTable = getDataTable(rolePage, 6);
         final List<Permissions> all = iPermissionsService.getAll();
         //构造返回结果列表
         List<RoleResponse> roleResponses = new ArrayList<>();
         //封装返回结果
-        for (Role record : rolePage.getRecords()) {
+        for (Role record : rolePage.rows()) {
             RoleResponse roleResponse = new RoleResponse();
             //获取权限树
             final List<PermissionResponse> permissionResponses = ListEntityConvert.listCopyToAnotherList(PermissionResponse.class, all);

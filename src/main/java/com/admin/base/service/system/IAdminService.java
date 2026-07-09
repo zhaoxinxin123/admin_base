@@ -1,10 +1,9 @@
 package com.admin.base.service.system;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.admin.base.common.PageResult;
 import com.admin.base.dto.request.system.LoginParam;
 import com.admin.base.dto.response.system.LoginResponse;
 import com.admin.base.entity.system.Admin;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -16,7 +15,7 @@ import java.util.List;
  * @author ZXX
  * @since 2021-09-05
  */
-public interface IAdminService extends IService<Admin> {
+public interface IAdminService {
     /**
      * 通过登录名查询管理员
      *
@@ -58,9 +57,9 @@ public interface IAdminService extends IService<Admin> {
      * @param page     当前页码
      * @param size     每页大小
      * @param username 用户名
-     * @return IPage<Admin>
+     * @return PageResult<Admin>
      */
-    IPage<Admin> getAdminList(Integer page, Integer size, String username);
+    PageResult<Admin> getAdminList(Integer page, Integer size, String username);
 
     /**
      * 登录

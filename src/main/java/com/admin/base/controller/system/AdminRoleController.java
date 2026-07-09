@@ -1,7 +1,7 @@
 package com.admin.base.controller.system;
 
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.admin.base.common.PageResult;
 import com.admin.base.constant.AdminStatus;
 import com.admin.base.constant.ResponseCode;
 import com.admin.base.constant.log.BusinessType;
@@ -53,10 +53,10 @@ public class AdminRoleController extends BaseController {
     @PostMapping("/list")
     @PreAuthorize("hasAuthority('sys:adminList')")
     public JsonResponse adminList(@RequestBody @Validated ListAdminParam listAdminParam) {
-        IPage<Admin> iPage = iAdminService.getAdminList(listAdminParam.getPage(), listAdminParam.getSize(), listAdminParam.getUserName());
-        final Map<String, Object> dataTable = getDataTable(iPage, 6);
+        PageResult<Admin> adminList = iAdminService.getAdminList(listAdminParam.getPage(), listAdminParam.getSize(), listAdminParam.getUserName());
+        final Map<String, Object> dataTable = getDataTable(adminList, 6);
         List<AdminResponse> list = new ArrayList<>();
-        for (Admin record : iPage.getRecords()) {
+        for (Admin record : adminList.rows()) {
             AdminResponse adminResponse = new AdminResponse();
             BeanUtils.copyProperties(record, adminResponse);
             //查询管理员角色信息

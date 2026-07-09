@@ -1,8 +1,7 @@
 package com.admin.base.service.system;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.admin.base.common.PageResult;
 import com.admin.base.entity.system.Role;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -14,7 +13,7 @@ import java.util.List;
  * @author ZXX
  * @since 2021-09-05
  */
-public interface IRoleService extends IService<Role> {
+public interface IRoleService {
     /**
      * 添加角色
      * @param roleName  角色名称
@@ -56,6 +55,6 @@ public interface IRoleService extends IService<Role> {
      * @param size  每页大小
      * @return   分页结果
      */
-    IPage<Role> getRolePage(Integer page,Integer size);
+    PageResult<Role> getRolePage(Integer page,Integer size);
 
 }

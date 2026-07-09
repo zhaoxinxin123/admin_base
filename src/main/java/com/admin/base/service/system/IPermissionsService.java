@@ -3,7 +3,6 @@ package com.admin.base.service.system;
 import com.admin.base.dto.request.system.UpdatePermissionParam;
 import com.admin.base.dto.request.system.AddPermissionParam;
 import com.admin.base.entity.system.Permissions;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -15,7 +14,7 @@ import java.util.List;
  * @author ZXX
  * @since 2021-09-05
  */
-public interface IPermissionsService extends IService<Permissions> {
+public interface IPermissionsService {
     /**
      * 根据ids列表
      *

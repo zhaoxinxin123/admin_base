@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.admin.base.common.PageResult;
 import com.admin.base.component.EntityInit;
 import com.admin.base.constant.RedisPrefix;
 import com.admin.base.constant.ResponseCode;
@@ -132,12 +133,13 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
     }
 
     @Override
-    public IPage<Admin> getAdminList(Integer page, Integer size, String name) {
+    public PageResult<Admin> getAdminList(Integer page, Integer size, String name) {
         QueryWrapper<Admin> adminQueryWrapper = new QueryWrapper<>();
         adminQueryWrapper.lambda()
                 .like(!StringUtils.isEmpty(name), Admin::getUserName, name);
         IPage<Admin> iPage = new Page<>(page, size);
-        return this.baseMapper.selectPage(iPage, adminQueryWrapper);
+        IPage<Admin> pageResult = this.baseMapper.selectPage(iPage, adminQueryWrapper);
+        return new PageResult<>(pageResult.getRecords(), pageResult.getTotal(), page, size);
     }
 
     @Override
