@@ -2,6 +2,7 @@ package com.admin.base.config.security;
 
 import com.admin.base.filter.MyTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -102,11 +103,13 @@ public class SecurityConfig {
     }
 
     /**
-     * 自定义token校验器
+     * 自定义token校验器 — 仅在 JWT 模式（或缺失 admin.auth.mode 配置）时装配。
+     * OAuth2/OIDC 模式为后续实现计划预留，Phase 1 仅 JWT 模式为可执行安全链。
      *
      * @return filter
      */
     @Bean
+    @ConditionalOnProperty(prefix = "admin.auth", name = "mode", havingValue = "jwt", matchIfMissing = true)
     public MyTokenFilter myTokenFilter() {
         return new MyTokenFilter();
     }
