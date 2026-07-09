@@ -3,7 +3,6 @@ package com.admin.base.service.system;
 import com.admin.base.entity.system.Permissions;
 import com.admin.base.entity.system.Role;
 import com.admin.base.entity.system.RolePermission;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -15,7 +14,7 @@ import java.util.List;
  * @author ZXX
  * @since 2021-09-05
  */
-public interface IRolePermissionService extends IService<RolePermission> {
+public interface IRolePermissionService {
     /**
      * 根据角色Id删除对应的权限
      * @param roleId  角色id

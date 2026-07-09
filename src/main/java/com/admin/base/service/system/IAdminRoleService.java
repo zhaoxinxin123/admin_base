@@ -1,7 +1,6 @@
 package com.admin.base.service.system;
 
 import com.admin.base.entity.system.AdminRole;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.admin.base.entity.system.Role;
 
 import java.util.List;
@@ -14,7 +13,7 @@ import java.util.List;
  * @author ZXX
  * @since 2021-09-05
  */
-public interface IAdminRoleService extends IService<AdminRole> {
+public interface IAdminRoleService {
     /**
      * 添加管理角色
      *

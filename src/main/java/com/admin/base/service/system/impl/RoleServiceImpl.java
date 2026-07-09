@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.admin.base.common.PageResult;
 import com.admin.base.component.EntityInit;
 import com.admin.base.constant.ResponseCode;
 import com.admin.base.exception.BusinessException;
@@ -98,9 +99,10 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements IR
 
 
     @Override
-    public IPage<Role> getRolePage(Integer page, Integer size) {
+    public PageResult<Role> getRolePage(Integer page, Integer size) {
         IPage<Role> iPage = new Page<>(page, size);
-        return this.baseMapper.selectPage(iPage, null);
+        IPage<Role> pageResult = this.baseMapper.selectPage(iPage, null);
+        return new PageResult<>(pageResult.getRecords(), pageResult.getTotal(), page, size);
     }
 
 

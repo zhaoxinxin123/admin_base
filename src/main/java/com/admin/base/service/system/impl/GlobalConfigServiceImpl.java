@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.admin.base.common.PageResult;
 import com.admin.base.component.EntityInit;
 import com.admin.base.dto.request.system.AddGlobalConfigParam;
 import com.admin.base.dto.request.system.UpdateGlobalConfigParam;
@@ -32,13 +33,14 @@ import java.util.List;
 public class GlobalConfigServiceImpl extends ServiceImpl<SysGlobalConfigMapper, GlobalConfig> implements IGlobalConfigService {
 
     @Override
-    public IPage<GlobalConfig> selectByPage(Integer page, Integer size, String key, String note) {
+    public PageResult<GlobalConfig> selectByPage(Integer page, Integer size, String key, String note) {
         IPage<GlobalConfig> iPage = new Page<>(page, size);
         QueryWrapper<GlobalConfig> queryWrapper = new QueryWrapper<>();
         queryWrapper.lambda().like(!StringUtils.isEmpty(key), GlobalConfig::getConfigKey, key)
                 .like(!StringUtils.isEmpty(note), GlobalConfig::getNote, note)
                 .orderByDesc(GlobalConfig::getCreateTime);
-        return this.baseMapper.selectPage(iPage, queryWrapper);
+        IPage<GlobalConfig> pageResult = this.baseMapper.selectPage(iPage, queryWrapper);
+        return new PageResult<>(pageResult.getRecords(), pageResult.getTotal(), page, size);
     }
 
     @Override

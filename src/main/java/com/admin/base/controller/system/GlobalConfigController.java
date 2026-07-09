@@ -1,7 +1,7 @@
 package com.admin.base.controller.system;
 
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.admin.base.common.PageResult;
 import com.admin.base.constant.log.BusinessType;
 import com.admin.base.dto.request.system.AddGlobalConfigParam;
 import com.admin.base.dto.request.system.DeleteGlobalConfigParam;
@@ -39,8 +39,8 @@ public class GlobalConfigController extends BaseController {
     @PreAuthorize("hasAuthority('sys:settingList')")
     @PostMapping("/list")
     public JsonResponse list(@Validated ListGlobalConfigParam listGlobalConfigParam) {
-        IPage<GlobalConfig> iPage = iGlobalConfigService.selectByPage(listGlobalConfigParam.getPage(), listGlobalConfigParam.getSize(), listGlobalConfigParam.getKey(), listGlobalConfigParam.getNote());
-        final Map<String, Object> dataTable = getDataTable(iPage, 6);
+        PageResult<GlobalConfig> pageResult = iGlobalConfigService.selectByPage(listGlobalConfigParam.getPage(), listGlobalConfigParam.getSize(), listGlobalConfigParam.getKey(), listGlobalConfigParam.getNote());
+        final Map<String, Object> dataTable = getDataTable(pageResult, 6);
         return JsonResponse.success(dataTable);
     }
 

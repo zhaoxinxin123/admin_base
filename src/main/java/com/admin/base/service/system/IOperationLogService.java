@@ -1,9 +1,8 @@
 package com.admin.base.service.system;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.admin.base.common.PageResult;
 import com.admin.base.dto.request.system.OperationLogListParam;
 import com.admin.base.entity.system.OperationLog;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -15,7 +14,7 @@ import java.util.List;
  * @author ZXX
  * @since 2021-09-23
  */
-public interface IOperationLogService extends IService<OperationLog> {
+public interface IOperationLogService {
     /**
      * 插入日志记录
      * @param operationLog  日志
@@ -27,7 +26,7 @@ public interface IOperationLogService extends IService<OperationLog> {
      * @param operationListParam
      * @return
      */
-    IPage<OperationLog> listPage(OperationLogListParam operationListParam);
+    PageResult<OperationLog> listPage(OperationLogListParam operationListParam);
 
     /**
      * 删除日志信息

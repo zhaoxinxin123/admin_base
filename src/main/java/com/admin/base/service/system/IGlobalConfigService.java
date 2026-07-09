@@ -1,10 +1,9 @@
 package com.admin.base.service.system;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.admin.base.common.PageResult;
 import com.admin.base.dto.request.system.AddGlobalConfigParam;
 import com.admin.base.dto.request.system.UpdateGlobalConfigParam;
 import com.admin.base.entity.system.GlobalConfig;
-import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
 
@@ -16,7 +15,7 @@ import java.util.List;
  * @author ZXX
  * @since 2021-09-23
  */
-public interface IGlobalConfigService extends IService<GlobalConfig> {
+public interface IGlobalConfigService {
     /**
      * 分页查询配置项
      *
@@ -26,7 +25,7 @@ public interface IGlobalConfigService extends IService<GlobalConfig> {
      * @param note 值
      * @return iPage
      */
-    IPage<GlobalConfig> selectByPage(Integer page, Integer size, String key, String note);
+    PageResult<GlobalConfig> selectByPage(Integer page, Integer size, String key, String note);
 
     /**
      * 新增全局配置
