@@ -1,6 +1,5 @@
 package com.admin.base.config.security;
 
-import com.admin.base.common.JsonResponse;
 import com.admin.base.constant.AdminStatus;
 import com.admin.base.constant.ResponseCode;
 import com.admin.base.entity.system.Admin;
@@ -42,7 +41,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         //查询用户
         Admin admin = iAdminService.selectByUserName(username);
         if (admin.getState().equals(AdminStatus.DISABLE)) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_ALERT, "账号已被封禁，请联系管理员！"));
+            throw new BusinessException(ResponseCode.CODE_ALERT, "账号已被封禁，请联系管理员！");
         }
         //查询该用户角色
         final List<Role> roles = iAdminRoleService.selectByAdminId(admin.getAdminId());

@@ -6,7 +6,6 @@ import com.admin.base.component.EntityInit;
 import com.admin.base.constant.ResponseCode;
 import com.admin.base.constant.YesOrNo;
 import com.admin.base.dto.request.system.UpdatePermissionParam;
-import com.admin.base.common.JsonResponse;
 import com.admin.base.dto.request.system.AddPermissionParam;
 import com.admin.base.entity.system.Permissions;
 import com.admin.base.exception.BusinessException;
@@ -73,7 +72,7 @@ public class PermissionsServiceImpl extends ServiceImpl<PermissionsMapper, Permi
     public void updatePermission(UpdatePermissionParam updatePermissionParam) {
         Permissions currentPermission = this.baseMapper.selectById(updatePermissionParam.getPermissionId());
         if (currentPermission == null) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_SYS_ERROR, "不存在该权限记录"));
+            throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "不存在该权限记录");
         }
         //检查parentId的level
         int level = checkLevel(updatePermissionParam.getParentId());
@@ -102,7 +101,7 @@ public class PermissionsServiceImpl extends ServiceImpl<PermissionsMapper, Permi
         if (!parentId.equals(0)) {
             final Permissions parentPermission = this.baseMapper.selectById(parentId);
             if (parentPermission == null || parentPermission.getLevel() > 1) {
-                throw new BusinessException(JsonResponse.error(ResponseCode.CODE_SYS_ERROR, "选择正确的父级id"));
+                throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "选择正确的父级id");
             }
             level = parentPermission.getLevel() + 1;
         }
@@ -115,7 +114,7 @@ public class PermissionsServiceImpl extends ServiceImpl<PermissionsMapper, Permi
     public void deleteById(Integer permissionId) {
         Permissions currentPermission = this.baseMapper.selectById(permissionId);
         if (currentPermission == null) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_ALERT, "菜单已被删除"));
+            throw new BusinessException(ResponseCode.CODE_ALERT, "菜单已被删除");
         }
         this.baseMapper.deleteById(permissionId);
         //删除角色权限中所有该值

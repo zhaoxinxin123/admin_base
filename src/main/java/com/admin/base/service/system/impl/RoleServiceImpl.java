@@ -8,7 +8,6 @@ import com.admin.base.component.EntityInit;
 import com.admin.base.constant.ResponseCode;
 import com.admin.base.exception.BusinessException;
 import com.admin.base.mapper.system.RoleMapper;
-import com.admin.base.common.JsonResponse;
 import com.admin.base.entity.system.Role;
 import com.admin.base.service.system.IRolePermissionService;
 import com.admin.base.service.system.IRoleService;
@@ -38,7 +37,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements IR
     @Override
     public void addRole(String note, String roleName, List<Integer> permissionIds) {
         if (checkExitsByRoleName(roleName)) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_ALERT, "该角色名称已存在"));
+            throw new BusinessException(ResponseCode.CODE_ALERT, "该角色名称已存在");
         }
         Role role = EntityInit.initRole(roleName, note);
         //插入角色
@@ -61,7 +60,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements IR
     public void updateRole(Integer roleId, String roleName, String note, List<Integer> permissionIds) {
         final Role role = this.baseMapper.selectById(roleId);
         if (checkExitsByRoleName(roleName) && !roleId.equals(role.getRoleId())) {
-            throw new BusinessException(JsonResponse.error(ResponseCode.CODE_ALERT, "该角色名称已存在"));
+            throw new BusinessException(ResponseCode.CODE_ALERT, "该角色名称已存在");
         }
         if (!roleName.equals(role.getRoleName())) {
             //更新角色名
