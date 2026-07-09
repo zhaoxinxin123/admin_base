@@ -4,8 +4,7 @@ import com.admin.base.common.JsonResponse;
 import com.admin.base.dto.request.system.ListAdminParam;
 import com.admin.base.dto.request.system.LoginParam;
 import com.admin.base.dto.response.system.CaptchaResponse;
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -37,6 +36,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
 class BaseApplicationTests {
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -62,9 +63,9 @@ class BaseApplicationTests {
                 // 解析返回的json字段中的属性值是否与断言一样
                 .andDo(MockMvcResultHandlers.print()).andReturn();
         String content = mvcResult.getResponse().getContentAsString();//可以拿到返回的内容
-        JsonResponse response = JSONObject.parseObject(content, JsonResponse.class);
+        JsonResponse response = objectMapper.readValue(content, JsonResponse.class);
         System.out.println(response.toString());
-        CaptchaResponse captchaResponse = JSONObject.parseObject(response.getData().toString(), CaptchaResponse.class);
+        CaptchaResponse captchaResponse = objectMapper.convertValue(response.getData(), CaptchaResponse.class);
         System.out.println(captchaResponse.toString());
     }
 
@@ -78,7 +79,7 @@ class BaseApplicationTests {
         MvcResult mvcResult = mockMvc
                 .perform(MockMvcRequestBuilders.post("/open/login")
                         .accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
-                        .contentType(MediaType.APPLICATION_JSON).content(JSON.toJSONString(loginRequest)))//import com.alibaba.fastjson.JSON;
+                        .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(loginRequest)))//import com.alibaba.fastjson.JSON;
                 //断言:判断状态码  status().isBadRequest()：400错误请求   status().isOk()：正确   status().isNotFound()：验证控制器不存在
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 // 解析返回的json字段中的属性值是否与断言一样
@@ -98,7 +99,7 @@ class BaseApplicationTests {
         listAdminParam.setSize(10);
         MvcResult mvcResult = mockMvc.perform(post("/admin_role/list")
                         .accept(MediaType.parseMediaType("application/json;charset=UTF-8"))
-                        .contentType(MediaType.APPLICATION_JSON).content(JSON.toJSONString(listAdminParam)))
+                        .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(listAdminParam)))
                 .andExpect(status().isOk()).andDo(MockMvcResultHandlers.print()).andReturn();
         String content = mvcResult.getResponse().getContentAsString();//可以拿到返回的内容
         System.out.println(content);

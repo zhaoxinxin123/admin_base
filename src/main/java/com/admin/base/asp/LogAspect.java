@@ -1,6 +1,5 @@
 package com.admin.base.asp;
 
-import com.google.gson.Gson;
 import com.admin.base.annotation.Log;
 import com.admin.base.config.security.UserDetailsImpl;
 import com.admin.base.constant.ResponseCode;
@@ -11,6 +10,8 @@ import com.admin.base.utils.RequestUtils;
 import com.admin.base.utils.SecurityUtils;
 import com.admin.base.utils.ServletUtils;
 import com.admin.base.utils.StringUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.Signature;
@@ -36,12 +37,15 @@ import java.util.Map;
  * @author ZXX
  * @version 1.0
  * @date 2021/9/22 9:54 下午
- * @desc 操作日志记录
+ * @desc 操作日志记录 — replaced Gson with Jackson
  */
 @Aspect
 @Component
 @Slf4j
 public class LogAspect {
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     // 配置织入点
     @Pointcut("@annotation(com.admin.base.annotation.Log)")
     public void logPointCut() {
@@ -86,8 +90,12 @@ public class LogAspect {
 
             String ip = RequestUtils.getCurrentRequest().getRemoteAddr();
             operationLog.setOperationIp(ip);
-            // 返回参数
-            operationLog.setJsonResult(jsonResult.toString());
+            // 返回参数 — use Jackson for serialization
+            try {
+                operationLog.setJsonResult(objectMapper.writeValueAsString(jsonResult));
+            } catch (JsonProcessingException ex) {
+                operationLog.setJsonResult(String.valueOf(jsonResult));
+            }
 
             operationLog.setOperationUrl(ServletUtils.getRequest().getRequestURI());
             if (loginUser != null) {
@@ -168,16 +176,18 @@ public class LogAspect {
     }
 
     /**
-     * 参数拼装
+     * 参数拼装 — use Jackson instead of Gson
      */
     private String argsArrayToString(Object[] paramsArray) {
         StringBuilder params = new StringBuilder();
         if (paramsArray != null && paramsArray.length > 0) {
             for (Object o : paramsArray) {
                 if (StringUtils.isNotNull(o) && !isFilterObject(o)) {
-
-                    Object jsonObj = new Gson().toJson(o);
-                    params.append(jsonObj.toString()).append(" ");
+                    try {
+                        params.append(objectMapper.writeValueAsString(o)).append(" ");
+                    } catch (JsonProcessingException e) {
+                        params.append(o.toString()).append(" ");
+                    }
                 }
             }
         }
