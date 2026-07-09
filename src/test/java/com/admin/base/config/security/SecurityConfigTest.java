@@ -8,7 +8,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,6 +38,7 @@ class SecurityConfigTest {
 
     /**
      * 公开端点 /open/captchaImage 允许匿名访问，返回 200 与标准 JsonResponse 结构。
+     * 注：$.data 字段取决于 Redis 可用性，由 OpenEndpointTest 专门验证完整响应结构。
      */
     @Test
     void openEndpointAllowsAnonymousAccess() throws Exception {
@@ -71,7 +71,7 @@ class SecurityConfigTest {
     }
 
     /**
-     * 无效 token 的受保护请求被拒绝，返回 401。
+     * 无效 token 的受保护请求被拒绝，返回 401 与 JsonResponse 错误体。
      */
     @Test
     void protectedEndpointRejectsInvalidToken() throws Exception {
@@ -79,6 +79,8 @@ class SecurityConfigTest {
                         .header("Authorization", "Bearer invalid-token-12345")
                         .contentType("application/json")
                         .content("{\"page\":1,\"size\":10}"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").isNumber())
+                .andExpect(jsonPath("$.msg").isString());
     }
 }

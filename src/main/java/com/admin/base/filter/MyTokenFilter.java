@@ -66,6 +66,11 @@ public class MyTokenFilter extends OncePerRequestFilter {
         log.debug("checking{} 是否重复登录", username);
         // Redis 中验证 token，查询是否被挤掉
         UserDetailsImpl userDetail = (UserDetailsImpl) jwtTokenUtil.getUserDetail(authToken);
+        if (userDetail == null) {
+            log.info("token解析失败，userDetail为null");
+            writeError(response, ResponseCode.CODE_TOKEN_ERROR, "token解析失败");
+            return;
+        }
         String cachedToken = cacheService.getTokenById(userDetail.getAdminId().toString());
         if (StringUtils.isBlank(cachedToken) || !cachedToken.equals(authToken)) {
             log.info("账号被挤掉");
