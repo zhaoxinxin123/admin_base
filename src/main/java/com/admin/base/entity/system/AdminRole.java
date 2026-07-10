@@ -16,6 +16,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+/**
+ * 管理员与角色关系表。
+ *
+ * <p>{@link Entity} 标识 JPA 实体；{@link EntityListeners} 启用 Spring Data JPA
+ * 审计能力，让 {@link CreatedDate} 自动写入 create_time。{@link Table} 中的唯一约束
+ * 防止同一管理员重复绑定同一角色。</p>
+ */
 @Data
 @Entity
 @EntityListeners(AuditingEntityListener.class)

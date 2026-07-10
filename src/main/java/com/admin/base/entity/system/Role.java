@@ -13,6 +13,12 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 
+/**
+ * 系统角色表。
+ *
+ * <p>{@link Entity} 标识 JPA 实体；{@link Table} 绑定 tb_sys_role 并声明角色名唯一约束。
+ * 本项目只校验 schema，不根据实体自动建表；{@link Column} 用来记录和校验列名、长度及非空规则。</p>
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity

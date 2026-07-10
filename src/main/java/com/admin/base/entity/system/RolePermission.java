@@ -16,6 +16,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+/**
+ * 角色与权限关系表。
+ *
+ * <p>{@link Entity} 标识 JPA 实体；{@link EntityListeners} 启用创建时间审计。
+ * {@link Table} 声明常用查询索引和 role_id + permission_id 唯一约束。</p>
+ */
 @Data
 @Entity
 @EntityListeners(AuditingEntityListener.class)

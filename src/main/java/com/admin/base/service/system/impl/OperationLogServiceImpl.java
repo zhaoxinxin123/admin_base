@@ -22,6 +22,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OperationLogServiceImpl implements IOperationLogService {
 
+    private static final String OPERATION_TIME_PROPERTY = "operationTime";
+
     private final OperationLogRepository operationLogRepository;
 
     @Override
@@ -34,7 +36,8 @@ public class OperationLogServiceImpl implements IOperationLogService {
         Pageable pageable = PageRequest.of(
                 operationListParam.getPage() - 1,
                 operationListParam.getSize(),
-                Sort.by(Sort.Direction.DESC, "operationTime"));
+                // Spring Data Sort 接收实体属性名字符串；JPA 静态元模型未启用，所以用常量集中管理。
+                Sort.by(Sort.Direction.DESC, OPERATION_TIME_PROPERTY));
         Page<OperationLog> page = operationLogRepository.findAll(specification(operationListParam), pageable);
         return new PageResult<>(page.getContent(), page.getTotalElements(), operationListParam.getPage(), operationListParam.getSize());
     }

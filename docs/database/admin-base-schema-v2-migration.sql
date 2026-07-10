@@ -1,6 +1,14 @@
 -- Admin Base Phase 2: migrate existing v1 system tables to the v2 JPA schema.
 -- This script only touches the seven retained system tables and does not add
 -- relational constraints.
+--
+-- Reason:
+-- The Phase 2 runtime uses Spring Data JPA with hibernate.ddl-auto=validate.
+-- Existing test/staging databases created by the old MyBatis schema may still
+-- have INT primary keys, narrower varchar columns, status instead of
+-- status_code, and plain text operation log payloads. Hibernate validation
+-- fails unless those retained tables match the v2 schema. This migration keeps
+-- existing data while aligning column names and types used by the JPA entities.
 
 SET NAMES utf8mb4;
 
@@ -10,6 +18,8 @@ SET json_result = JSON_QUOTE(json_result)
 WHERE json_result IS NOT NULL
   AND JSON_VALID(json_result) = 0;
 
+-- Align retained account, role, permission, and config tables with v2 entity
+-- IDs and column constraints. BIGINT IDs match the JPA Long identifiers.
 ALTER TABLE tb_sys_admin
   MODIFY admin_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   MODIFY nickname VARCHAR(64) NOT NULL,
@@ -46,6 +56,8 @@ ALTER TABLE tb_sys_global_config
   MODIFY config_value VARCHAR(512) NOT NULL,
   MODIFY note VARCHAR(255) NULL;
 
+-- Operation logs changed from the old status column to explicit status_code
+-- plus success flag. JSON columns require valid JSON before the type change.
 ALTER TABLE tb_sys_operation_log
   CHANGE status status_code INT NULL;
 

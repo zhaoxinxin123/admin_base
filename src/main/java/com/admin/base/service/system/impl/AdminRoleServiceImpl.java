@@ -14,6 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * 管理员角色关系服务。
+ *
+ * <p>迁移到 JPA 后不再继承 MyBatis Plus ServiceImpl，所有持久化操作通过 Repository 完成。</p>
+ */
 @Service
 public class AdminRoleServiceImpl implements IAdminRoleService {
 
@@ -24,6 +29,7 @@ public class AdminRoleServiceImpl implements IAdminRoleService {
     public AdminRoleServiceImpl(
             AdminRoleRepository adminRoleRepository,
             RoleRepository roleRepository,
+            // AdminServiceImpl 也依赖 IAdminRoleService；延迟注入用于打破这个既有循环依赖。
             @Lazy IAdminService iAdminService) {
         this.adminRoleRepository = adminRoleRepository;
         this.roleRepository = roleRepository;
@@ -34,6 +40,7 @@ public class AdminRoleServiceImpl implements IAdminRoleService {
     @Transactional(rollbackFor = Exception.class)
     public void addAdminRole(Long adminId, Integer roleId) {
         Long roleIdValue = toLongId(roleId);
+        // 关系表有 admin_id + role_id 唯一约束，保存前先做幂等判断。
         if (adminRoleRepository.existsByAdminIdAndRoleId(adminId, roleIdValue)) {
             return;
         }
@@ -67,6 +74,7 @@ public class AdminRoleServiceImpl implements IAdminRoleService {
                 .map(AdminRole::getRoleId)
                 .toList();
         List<Long> requestedRoleIds = roleIds == null ? List.of() : roleIds.stream().map(Integer::longValue).toList();
+        // 保留交集，只删除旧集合独有角色，只新增新集合独有角色。
         List<Long> pubIds = oldRoleIds.stream().filter(requestedRoleIds::contains).toList();
         List<Long> addIds = requestedRoleIds.stream().filter(id -> !pubIds.contains(id)).toList();
         List<Long> deleteIds = oldRoleIds.stream().filter(id -> !pubIds.contains(id)).toList();

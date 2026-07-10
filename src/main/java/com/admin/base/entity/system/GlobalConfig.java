@@ -13,6 +13,12 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 
+/**
+ * 全局配置表。
+ *
+ * <p>{@link Entity} 标识 JPA 实体；{@link Table} 绑定 tb_sys_global_config 并保证
+ * config_key 唯一。显式 {@link Column} 用于固定 v2 schema 的列名、长度和非空约束。</p>
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity

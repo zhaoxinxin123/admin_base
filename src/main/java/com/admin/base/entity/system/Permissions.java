@@ -14,6 +14,13 @@ import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 
+/**
+ * 系统权限/菜单表。
+ *
+ * <p>{@link Entity} 标识 JPA 实体；{@link Table} 绑定表名、查询索引和权限码唯一约束。
+ * {@link Column} 明确列名、长度、非空约束和 TINYINT 类型，便于 Hibernate validate
+ * 与数据库 schema 做严格比对。</p>
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity

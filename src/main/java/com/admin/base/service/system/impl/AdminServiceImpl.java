@@ -36,8 +36,11 @@ import java.util.List;
 
 @Service
 @Slf4j
+// Lombok 为 final 字段生成构造方法，Spring 通过构造器注入依赖，避免字段注入。
 @RequiredArgsConstructor
 public class AdminServiceImpl implements IAdminService {
+
+    private static final String CREATE_TIME_PROPERTY = "createTime";
 
     private final PasswordEncoder passwordEncoder;
     private final IAdminRoleService iAdminRoleService;
@@ -90,7 +93,8 @@ public class AdminServiceImpl implements IAdminService {
 
     @Override
     public PageResult<Admin> getAdminList(Integer page, Integer size, String name) {
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        // Spring Data Sort 使用实体属性名；提成常量可减少裸字符串散落。
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, CREATE_TIME_PROPERTY));
         Page<Admin> pageResult;
         if (StringUtils.hasText(name)) {
             pageResult = adminRepository.findByUserNameContaining(name, pageable);

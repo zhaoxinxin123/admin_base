@@ -27,11 +27,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GlobalConfigServiceImpl implements IGlobalConfigService {
 
+    private static final String CREATE_TIME_PROPERTY = "createTime";
+
     private final GlobalConfigRepository globalConfigRepository;
 
     @Override
     public PageResult<GlobalConfig> selectByPage(Integer page, Integer size, String key, String note) {
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, CREATE_TIME_PROPERTY));
         Page<GlobalConfig> pageResult = globalConfigRepository.findAll(specification(key, note), pageable);
         return new PageResult<>(pageResult.getContent(), pageResult.getTotalElements(), page, size);
     }
@@ -76,6 +78,12 @@ public class GlobalConfigServiceImpl implements IGlobalConfigService {
         return id == null ? null : id.longValue();
     }
 
+    /**
+     * 构建配置列表动态查询条件。
+     *
+     * <p>这里的 Specification 等价于原 MyBatis QueryWrapper 的动态 where：
+     * key 和 note 为空时不追加条件；有值时使用 LIKE 做模糊查询。</p>
+     */
     private Specification<GlobalConfig> specification(String key, String note) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
