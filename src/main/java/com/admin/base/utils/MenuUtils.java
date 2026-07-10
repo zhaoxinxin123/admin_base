@@ -21,7 +21,7 @@ public class MenuUtils {
      * @param menu                其中一个一级列表id
      * @return 树状结构的权限列表
      */
-    public static List<PermissionResponse> getChild(List<PermissionResponse> permissionResponses, Integer permissionId, PermissionResponse menu) {
+    public static List<PermissionResponse> getChild(List<PermissionResponse> permissionResponses, Long permissionId, PermissionResponse menu) {
         List<PermissionResponse> childList = new ArrayList<>();
         permissionResponses.forEach(permissionResponse -> {
             if (permissionResponse.getParentId().equals(permissionId)) {
@@ -41,7 +41,7 @@ public class MenuUtils {
      * @param list      管理员拥有的权限id
      * @return rootMenus
      */
-    public static List<PermissionResponse> setSelected(List<PermissionResponse> rootMenus, List<Integer> list) {
+    public static List<PermissionResponse> setSelected(List<PermissionResponse> rootMenus, List<Long> list) {
         for (PermissionResponse rootMenu : rootMenus) {
             if (list.contains(rootMenu.getPermissionId())) {
                 if (rootMenu.getChild() != null) {

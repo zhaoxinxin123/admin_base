@@ -1,51 +1,35 @@
 package com.admin.base.entity.system;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.admin.base.entity.AuditableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
-/**
- * <p>
- *
- * </p>
- *
- * @author ZXX
- * @since 2021-09-05
- */
 @Data
-@EqualsAndHashCode(callSuper = false)
-@TableName("tb_sys_role")
-public class Role extends Model<Role> implements Serializable {
-
+@EqualsAndHashCode(callSuper = true)
+@Entity
+@Table(name = "tb_sys_role", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_sys_role_role_name", columnNames = "role_name")
+})
+public class Role extends AuditableEntity implements Serializable {
     private static final long serialVersionUID = 1L;
-    /**
-     * 角色Id
-     */
-    @TableId(value = "role_id", type = IdType.AUTO)
-    private Integer roleId;
-    /**
-     * 角色名称
-     */
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "role_id")
+    private Long roleId;
+
+    @Column(name = "role_name", nullable = false, length = 64)
     private String roleName;
-    /**
-     * 备注
-     */
+
+    @Column(name = "note")
     private String note;
-    /**
-     * 创建时间
-     */
-    private LocalDateTime createTime;
-
-    /**
-     * 更新时间
-     */
-    private LocalDateTime updateTime;
-
-
 }

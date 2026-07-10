@@ -11,10 +11,13 @@ spring:
       host: ${DEV_REDIS_HOST:127.0.0.1}
       port: ${DEV_REDIS_PORT:6379}
       password: ${DEV_REDIS_PASSWORD:}
-mybatis-plus:
-  mapper-locations: classpath:mapper/*.xml
-  configuration:
-    map-underscore-to-camel-case: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
 sysconfig:
   captchaType: math
   uploadPath: /home/uploadPath

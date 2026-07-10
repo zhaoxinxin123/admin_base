@@ -13,7 +13,7 @@ import java.util.List;
  */
 @Data
 public class AdminResponse {
-    private Integer adminId;
+    private Long adminId;
     /**
      * 昵称
      */
@@ -40,7 +40,7 @@ public class AdminResponse {
     /**
      * 角色Id
      */
-    private Integer roleId;
+    private Long roleId;
     /**
      * 角色名称
      */

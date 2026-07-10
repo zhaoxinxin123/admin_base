@@ -1,28 +1,28 @@
 package com.admin.base.service.system.impl;
 
 import cn.hutool.extra.spring.SpringUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.admin.base.common.PageResult;
 import com.admin.base.component.EntityInit;
-import com.admin.base.constant.RedisPrefix;
-import com.admin.base.constant.ResponseCode;
 import com.admin.base.component.ResponseInit;
 import com.admin.base.config.security.UserDetailsImpl;
 import com.admin.base.config.security.UserDetailsServiceImpl;
+import com.admin.base.constant.RedisPrefix;
+import com.admin.base.constant.ResponseCode;
 import com.admin.base.dto.request.system.LoginParam;
 import com.admin.base.dto.response.system.LoginResponse;
 import com.admin.base.entity.system.Admin;
 import com.admin.base.exception.BusinessException;
-import com.admin.base.mapper.system.AdminMapper;
+import com.admin.base.repository.system.AdminRepository;
 import com.admin.base.service.ICacheService;
 import com.admin.base.service.system.IAdminRoleService;
 import com.admin.base.service.system.IAdminService;
 import com.admin.base.utils.JwtTokenUtil;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,137 +32,90 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import jakarta.annotation.Resource;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * <p>
- * 服务实现类
- * </p>
- *
- * @author ZXX
- * @since 2021-09-05
- */
 @Service
 @Slf4j
-public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements IAdminService {
-    @Resource
-    private PasswordEncoder passwordEncoder;
-    @Resource
-    private IAdminRoleService iAdminRoleService;
-//    @Resource
-//    @Lazy
-//    @Autowired
-//    private UserDetailsServiceImpl userDetailsService;
-    @Resource
-    private JwtTokenUtil jwtTokenUtil;
-    @Resource
-    private ICacheService iCacheService;
+@RequiredArgsConstructor
+public class AdminServiceImpl implements IAdminService {
 
-    @Resource
-    private ICacheService cacheService;
-
+    private final PasswordEncoder passwordEncoder;
+    private final IAdminRoleService iAdminRoleService;
+    private final JwtTokenUtil jwtTokenUtil;
+    private final ICacheService iCacheService;
+    private final AdminRepository adminRepository;
 
     @Override
     public Admin selectByUserName(String username) {
-        QueryWrapper<Admin> adminQueryWrapper = new QueryWrapper<>();
-        adminQueryWrapper.lambda().eq(Admin::getUserName, username);
-        final Admin admin = this.baseMapper.selectOne(adminQueryWrapper);
-        if (admin == null) {
-            throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "不存在该管理员！");
-        }
-        return admin;
+        return adminRepository.findByUserName(username)
+                .orElseThrow(() -> new BusinessException(ResponseCode.CODE_SYS_ERROR, "不存在该管理员！"));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addAdmin(String username, String password, String nickName, List<Integer> roleIds) {
-        //检查用户名是否存在
-        QueryWrapper<Admin> adminQueryWrapper = new QueryWrapper<>();
-        adminQueryWrapper.lambda().eq(Admin::getUserName, username);
-        final Long count = this.baseMapper.selectCount(adminQueryWrapper);
-        if (count > 0) {
+        if (adminRepository.existsByUserName(username)) {
             throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "该账号已存在，请重新设置！");
         }
         Admin admin = EntityInit.initAdmin(username, passwordEncoder.encode(password), password, nickName);
-        Integer adminId = this.baseMapper.insertAdmin(admin);
-        log.info("插入管理员成功：Id为" + admin.getAdminId());
-        //添加管理员角色
+        Admin saved = adminRepository.save(admin);
+        log.info("插入管理员成功：Id为{}", saved.getAdminId());
         for (Integer roleId : roleIds) {
-            //TODO 修改
-//            final IAdminRoleService iAdminRoleService = SpringUtil.getBean("iAdminRoleService");
-            iAdminRoleService.addAdminRole(admin.getAdminId(), roleId);
+            iAdminRoleService.addAdminRole(saved.getAdminId(), roleId);
         }
-
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteAdmin(Integer adminId) {
-        Admin admin = this.baseMapper.selectById(adminId);
-        if (admin == null) {
-            throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "账号不存在");
-        }
-        //判断账号是否为自己
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails userDetails = (UserDetails) authentication.getDetails();
-        String username = userDetails.getUsername();
-        Admin selectByUserName = selectByUserName(username);
-        if (selectByUserName.getAdminId().equals(adminId)) {
+        Long adminIdValue = toLongId(adminId);
+        Admin admin = adminRepository.findById(adminIdValue)
+                .orElseThrow(() -> new BusinessException(ResponseCode.CODE_SYS_ERROR, "账号不存在"));
+        String username = currentUsername();
+        Admin currentAdmin = selectByUserName(username);
+        if (currentAdmin.getAdminId().equals(admin.getAdminId())) {
             throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "不能删除自己");
         }
-        //删除
-        this.baseMapper.deleteById(adminId);
-        //删除对应的角色数据
-        //TODO 修改
-//        final IAdminRoleService iAdminRoleService = SpringUtil.getBean("iAdminRoleService");
-        iAdminRoleService.updateAdminOfRole(adminId, new ArrayList<>());
-
+        adminRepository.deleteById(adminIdValue);
+        iAdminRoleService.updateAdminOfRole(adminId, List.of());
     }
 
     @Override
     public void updatePassword(Integer adminId, String password) {
-        UpdateWrapper<Admin> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.lambda().eq(Admin::getAdminId, adminId)
-                .set(Admin::getPassword, passwordEncoder.encode(password))
-//                .set(Admin::getPasswordShow, password)
-                .set(Admin::getUpdateTime, LocalDateTime.now());
-        this.baseMapper.update(null, updateWrapper);
+        Admin admin = adminRepository.findById(toLongId(adminId))
+                .orElseThrow(() -> new BusinessException(ResponseCode.CODE_SYS_ERROR, "账号不存在"));
+        admin.setPassword(passwordEncoder.encode(password));
+        adminRepository.save(admin);
     }
 
     @Override
     public PageResult<Admin> getAdminList(Integer page, Integer size, String name) {
-        QueryWrapper<Admin> adminQueryWrapper = new QueryWrapper<>();
-        adminQueryWrapper.lambda()
-                .like(!StringUtils.isEmpty(name), Admin::getUserName, name);
-        IPage<Admin> iPage = new Page<>(page, size);
-        IPage<Admin> pageResult = this.baseMapper.selectPage(iPage, adminQueryWrapper);
-        return new PageResult<>(pageResult.getRecords(), pageResult.getTotal(), page, size);
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createTime"));
+        Page<Admin> pageResult;
+        if (StringUtils.hasText(name)) {
+            pageResult = adminRepository.findByUserNameContaining(name, pageable);
+        } else {
+            pageResult = adminRepository.findAll(pageable);
+        }
+        return new PageResult<>(pageResult.getContent(), pageResult.getTotalElements(), page, size);
     }
 
     @Override
     public LoginResponse login(LoginParam loginParam) {
-        //校验验证码   可加全局配置  是否开启验证码
         validateCaptcha(loginParam.getUuid(), loginParam.getCode());
-        //认证
-//        final Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginParam.getUsername(), loginParam.getPassword()));
-//        final UserDetailsImpl userDetails = (UserDetailsImpl) authenticate.getPrincipal();
-        final UserDetailsServiceImpl userDetailsService = SpringUtil.getBean("userDetailsService");
+        UserDetailsServiceImpl userDetailsService = SpringUtil.getBean("userDetailsService");
         UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(loginParam.getUsername());
-//        UserDetailsImpl userDetails = (UserDetailsImpl) this.userDetailsService.loadUserByUsername(loginParam.getUsername());
-        log.debug(userDetails.getUsername() + "---------");
+        log.debug("{}---------", userDetails.getUsername());
         if (!passwordEncoder.matches(loginParam.getPassword(), userDetails.getPassword())) {
             throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "用户名或密码错误");
         }
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        authentication.setDetails(userDetails);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtTokenUtil.generateToken(userDetails);
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        cacheService.saveToken(token,userDetails.getAdminId().toString());
-        //生成token
+        iCacheService.saveToken(token, userDetails.getAdminId().toString());
         return ResponseInit.initLoginResponse(
                 userDetails.getAdminId(),
                 userDetails.getUsername(),
@@ -183,12 +136,26 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, Admin> implements
 
     @Override
     public void updateAdminState(Integer adminId, Integer state) {
-        UpdateWrapper<Admin> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.lambda()
-                .eq(Admin::getAdminId, adminId)
-                .set(Admin::getState, state)
-                .set(Admin::getUpdateTime, LocalDateTime.now());
-        this.baseMapper.update(null, updateWrapper);
+        Admin admin = adminRepository.findById(toLongId(adminId))
+                .orElseThrow(() -> new BusinessException(ResponseCode.CODE_SYS_ERROR, "账号不存在"));
+        admin.setState(state);
+        adminRepository.save(admin);
     }
 
+    private String currentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Object details = authentication == null ? null : authentication.getDetails();
+        if (details instanceof UserDetails userDetails) {
+            return userDetails.getUsername();
+        }
+        Object principal = authentication == null ? null : authentication.getPrincipal();
+        if (principal instanceof UserDetails userDetails) {
+            return userDetails.getUsername();
+        }
+        throw new BusinessException(ResponseCode.CODE_NO_LOGIN, "获取用户账户异常");
+    }
+
+    private Long toLongId(Integer id) {
+        return id == null ? null : id.longValue();
+    }
 }

@@ -9,10 +9,13 @@ spring:
       host: ${TEST_REDIS_HOST:192.168.3.3}
       port: ${TEST_REDIS_PORT:6379}
       password: ${TEST_REDIS_PASSWORD:hjdz@10086}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
 admin:
   auth:
     mode: jwt
-mybatis-plus:
-  mapper-locations: classpath:mapper/*.xml
-  configuration:
-    map-underscore-to-camel-case: true

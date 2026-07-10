@@ -16,7 +16,7 @@ public class SecurityUtils {
     /**
      * 用户ID
      **/
-    public static Integer getUserId() {
+    public static Long getUserId() {
         try {
             return getLoginUser().getAdminId();
         } catch (Exception e) {

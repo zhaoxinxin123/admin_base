@@ -1,90 +1,84 @@
 package com.admin.base.service.system.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.admin.base.component.EntityInit;
 import com.admin.base.entity.system.Admin;
 import com.admin.base.entity.system.AdminRole;
 import com.admin.base.entity.system.Role;
-import com.admin.base.mapper.system.AdminRoleMapper;
+import com.admin.base.repository.system.AdminRoleRepository;
+import com.admin.base.repository.system.RoleRepository;
 import com.admin.base.service.system.IAdminRoleService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.admin.base.service.system.IAdminService;
-import com.admin.base.service.system.IRoleService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * <p>
- * 服务实现类
- * </p>
- *
- * @author ZXX
- * @since 2021-09-05
- */
 @Service
-public class  AdminRoleServiceImpl extends ServiceImpl<AdminRoleMapper, AdminRole> implements IAdminRoleService {
-    @Lazy
-    @Autowired
-    private IAdminService iAdminService;
+public class AdminRoleServiceImpl implements IAdminRoleService {
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void addAdminRole(Integer adminId, Integer roleId) {
-        AdminRole adminRole = EntityInit.initAdminRole(adminId, roleId);
-        //如果adminId和RoleId 已存在 直接返回
-        QueryWrapper<AdminRole> adminRoleQueryWrapper = new QueryWrapper<>();
-        adminRoleQueryWrapper.lambda().eq(AdminRole::getAdminId, adminId)
-                .eq(AdminRole::getRoleId, roleId);
-        final Long count = this.baseMapper.selectCount(adminRoleQueryWrapper);
-        if (count > 0) {
-            return;
-        }
-        this.baseMapper.insert(adminRole);
+    private final AdminRoleRepository adminRoleRepository;
+    private final RoleRepository roleRepository;
+    private final IAdminService iAdminService;
+
+    public AdminRoleServiceImpl(
+            AdminRoleRepository adminRoleRepository,
+            RoleRepository roleRepository,
+            @Lazy IAdminService iAdminService) {
+        this.adminRoleRepository = adminRoleRepository;
+        this.roleRepository = roleRepository;
+        this.iAdminService = iAdminService;
     }
 
     @Override
-    public List<Role> selectByAdminId(Integer adminId) {
-        return this.baseMapper.selectRoleByAdminId(adminId);
+    @Transactional(rollbackFor = Exception.class)
+    public void addAdminRole(Long adminId, Integer roleId) {
+        Long roleIdValue = toLongId(roleId);
+        if (adminRoleRepository.existsByAdminIdAndRoleId(adminId, roleIdValue)) {
+            return;
+        }
+        adminRoleRepository.save(EntityInit.initAdminRole(adminId, roleId));
+    }
+
+    @Override
+    public List<Role> selectByAdminId(Long adminId) {
+        List<Long> roleIds = adminRoleRepository.findByAdminId(adminId)
+                .stream()
+                .map(AdminRole::getRoleId)
+                .toList();
+        if (roleIds.isEmpty()) {
+            return List.of();
+        }
+        return roleRepository.findAllById(roleIds);
     }
 
     @Override
     public List<Role> selectRoleByName(String userName) {
-        final Admin admin = iAdminService.selectByUserName(userName);
+        Admin admin = iAdminService.selectByUserName(userName);
         return selectByAdminId(admin.getAdminId());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateAdminOfRole(Integer adminId, List<Integer> roleIds) {
-        final List<Role> oldRoles = selectByAdminId(adminId);
-        if (oldRoles.size() != 0) {
-            final List<Integer> oldRoleIds = oldRoles.stream().map(Role::getRoleId).collect(Collectors.toList());
-            //两者取交集获得  共有的ids
-            final List<Integer> pubIds = oldRoleIds.stream().filter(roleIds::contains).collect(Collectors.toList());
-            //拿插入的newPermissionIds-pubIds    =需要插入的权限列表
-            final List<Integer> addIds = roleIds.stream().sequential().filter(id -> !pubIds.contains(id)).collect(Collectors.toList());
-            //oldRoleIds - pubIds    = 需要删除的权限列表
-            final List<Integer> deleteIds = oldRoleIds.stream().filter(id -> !pubIds.contains(id)).collect(Collectors.toList());
-            if (deleteIds.size() > 0) {
-                for (Integer deleteId : deleteIds) {
-                    QueryWrapper<AdminRole> queryWrapper = new QueryWrapper<>();
-                    queryWrapper.lambda().eq(AdminRole::getAdminId, adminId)
-                            .eq(AdminRole::getRoleId, deleteId);
-                    this.baseMapper.delete(queryWrapper);
-                }
-            }
-            for (Integer roleId : addIds) {
-                addAdminRole(adminId, roleId);
-            }
-        } else {
-            for (Integer roleId : roleIds) {
-                addAdminRole(adminId, roleId);
-            }
+        Long adminIdValue = toLongId(adminId);
+        List<Long> oldRoleIds = adminRoleRepository.findByAdminId(adminIdValue)
+                .stream()
+                .map(AdminRole::getRoleId)
+                .toList();
+        List<Long> requestedRoleIds = roleIds == null ? List.of() : roleIds.stream().map(Integer::longValue).toList();
+        List<Long> pubIds = oldRoleIds.stream().filter(requestedRoleIds::contains).toList();
+        List<Long> addIds = requestedRoleIds.stream().filter(id -> !pubIds.contains(id)).toList();
+        List<Long> deleteIds = oldRoleIds.stream().filter(id -> !pubIds.contains(id)).toList();
+        for (Long deleteId : deleteIds) {
+            adminRoleRepository.deleteByAdminIdAndRoleId(adminIdValue, deleteId);
         }
+        for (Long roleId : addIds) {
+            addAdminRole(adminIdValue, roleId.intValue());
+        }
+    }
+
+    private Long toLongId(Integer id) {
+        return id == null ? null : id.longValue();
     }
 }

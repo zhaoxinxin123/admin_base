@@ -16,7 +16,7 @@ public class RoleResponse {
     /**
      * 角色Id
      */
-    private Integer roleId;
+    private Long roleId;
     /**
      * 角色名称
      */

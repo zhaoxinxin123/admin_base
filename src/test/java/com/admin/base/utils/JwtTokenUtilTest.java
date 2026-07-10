@@ -42,7 +42,7 @@ class JwtTokenUtilTest {
         userDetails.setUsername("admin");
         userDetails.setPassword("encoded-password");
         userDetails.setNickName("管理员");
-        userDetails.setAdminId(1);
+        userDetails.setAdminId(1L);
         userDetails.setPerms(List.of("sys:adminList", "sys:roleList"));
 
         String token = jwtTokenUtil.generateToken(userDetails);
@@ -60,7 +60,7 @@ class JwtTokenUtilTest {
 
         UserDetailsImpl restoredImpl = (UserDetailsImpl) restored;
         assertThat(restoredImpl.getNickName()).isEqualTo("管理员");
-        assertThat(restoredImpl.getAdminId()).isEqualTo(1);
+        assertThat(restoredImpl.getAdminId()).isEqualTo(1L);
         assertThat(restoredImpl.getPerms()).containsExactly("sys:adminList", "sys:roleList");
 
         // Verify getAuthorities() does not throw NPE (roles defaulted to empty list)
@@ -73,7 +73,7 @@ class JwtTokenUtilTest {
         UserDetailsImpl userDetails = new UserDetailsImpl();
         userDetails.setUsername("admin");
         userDetails.setPassword("pw");
-        userDetails.setAdminId(1);
+        userDetails.setAdminId(1L);
 
         String token = jwtTokenUtil.generateToken(userDetails);
         assertThat(jwtTokenUtil.validateToken(token, userDetails)).isTrue();
@@ -84,12 +84,12 @@ class JwtTokenUtilTest {
         UserDetailsImpl userDetails = new UserDetailsImpl();
         userDetails.setUsername("admin");
         userDetails.setPassword("pw");
-        userDetails.setAdminId(1);
+        userDetails.setAdminId(1L);
 
         UserDetailsImpl other = new UserDetailsImpl();
         other.setUsername("other");
         other.setPassword("pw");
-        other.setAdminId(2);
+        other.setAdminId(2L);
 
         String token = jwtTokenUtil.generateToken(userDetails);
         assertThat(jwtTokenUtil.validateToken(token, other)).isFalse();
@@ -97,20 +97,20 @@ class JwtTokenUtilTest {
 
     @Test
     void tokenUserRoundTripViaJackson() throws Exception {
-        TokenUser original = new TokenUser("admin", "pw", "管理员", 1,
+        TokenUser original = new TokenUser("admin", "pw", "管理员", 1L,
                 List.of("sys:adminList", "sys:roleList"));
 
         String json = objectMapper.writeValueAsString(original);
         TokenUser restored = objectMapper.readValue(json, TokenUser.class);
 
         assertThat(restored.username()).isEqualTo("admin");
-        assertThat(restored.adminId()).isEqualTo(1);
+        assertThat(restored.adminId()).isEqualTo(1L);
         assertThat(restored.perms()).containsExactly("sys:adminList", "sys:roleList");
 
         // Verify TokenUser → UserDetailsImpl conversion
         UserDetailsImpl impl = restored.toUserDetails();
         assertThat(impl.getUsername()).isEqualTo("admin");
-        assertThat(impl.getAdminId()).isEqualTo(1);
+        assertThat(impl.getAdminId()).isEqualTo(1L);
         assertThat(impl.getPerms()).containsExactly("sys:adminList", "sys:roleList");
     }
 }

@@ -1,61 +1,48 @@
 package com.admin.base.entity.system;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.admin.base.entity.AuditableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
-/**
- * @author ZXX
- * @version 1.0
- * @date 2021/8/19 2:18 下午
- * @desc 继承Model<Admin>  可以使用实体类进行增删改查
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
-@TableName("tb_sys_admin")
-public class Admin extends Model<Admin> implements Serializable {
+@Entity
+@Table(name = "tb_sys_admin", indexes = {
+        @Index(name = "idx_sys_admin_state", columnList = "state")
+}, uniqueConstraints = {
+        @UniqueConstraint(name = "uk_sys_admin_user_name", columnNames = "user_name")
+})
+public class Admin extends AuditableEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * id
-     */
-    @TableId(value = "admin_id", type = IdType.AUTO)
-    private Integer adminId;
-    /**
-     * 昵称
-     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "admin_id")
+    private Long adminId;
+
+    @Column(name = "nickname", nullable = false, length = 64)
     private String nickname;
-    /**
-     * 登录名
-     */
+
+    @Column(name = "user_name", nullable = false, length = 64)
     private String userName;
-    /**
-     * 密码
-     */
+
+    @Column(name = "password", nullable = false)
     private String password;
-    /**
-     * 状态
-     */
+
+    @Column(name = "state", nullable = false, columnDefinition = "TINYINT")
     private Integer state;
 
-    /**
-     * 密码
-     */
+    @Transient
     private String passwordShow;
-    /**
-     * 创建时间
-     */
-    private LocalDateTime createTime;
-
-    /**
-     * 更新时间
-     */
-    private LocalDateTime updateTime;
-
 }
