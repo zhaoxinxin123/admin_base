@@ -13,7 +13,7 @@ import java.util.List;
  */
 @Data
 public class PermissionResponse {
-    private Integer permissionId;
+    private Long permissionId;
     /**
      * 级别
      */
@@ -29,7 +29,7 @@ public class PermissionResponse {
     /**
      * 上级Id
      */
-    private Integer parentId;
+    private Long parentId;
 
     /**
      * 权限名

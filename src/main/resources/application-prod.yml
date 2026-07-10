@@ -11,10 +11,10 @@ spring:
       host: ${PROD_REDIS_HOST}
       port: ${PROD_REDIS_PORT:6379}
       password: ${PROD_REDIS_PASSWORD:}
-mybatis-plus:
-  mapper-locations: classpath:mapper/*.xml
-  configuration:
-    map-underscore-to-camel-case: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
 # 生产环境 sysconfig：关键路径（uploadPath/downloadPath/localStore）不提供默认值，
 # 必须通过 PROD_* 环境变量显式配置；captchaType/resourcePrefix 有生产默认值
 sysconfig:

@@ -26,5 +26,5 @@ public class LoginResponse {
     /**
      * 管理员id
      */
-    private Integer adminId;
+    private Long adminId;
 }

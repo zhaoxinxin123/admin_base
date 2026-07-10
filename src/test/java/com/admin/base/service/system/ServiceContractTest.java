@@ -1,7 +1,5 @@
 package com.admin.base.service.system;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
@@ -24,9 +22,9 @@ class ServiceContractTest {
     @Test
     void systemServiceInterfacesDoNotExtendMybatisPlusIService() {
         for (Class<?> serviceType : serviceTypes) {
-            assertThat(IService.class.isAssignableFrom(serviceType))
+            assertThat(List.of(serviceType.getInterfaces()))
                     .as(serviceType.getName())
-                    .isFalse();
+                    .noneMatch(type -> type.getName().equals("com.baomidou.mybatisplus.extension.service.IService"));
         }
     }
 
@@ -36,7 +34,7 @@ class ServiceContractTest {
             for (Method method : serviceType.getMethods()) {
                 assertThat(method.getReturnType())
                         .as(serviceType.getSimpleName() + "." + method.getName())
-                        .isNotEqualTo(IPage.class);
+                        .matches(type -> !type.getName().equals("com.baomidou.mybatisplus.core.metadata.IPage"));
             }
         }
     }

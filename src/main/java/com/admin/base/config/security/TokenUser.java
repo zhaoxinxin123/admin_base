@@ -12,7 +12,7 @@ public record TokenUser(
         String username,
         String password,
         String nickName,
-        Integer adminId,
+        Long adminId,
         List<String> perms
 ) {
     /**

@@ -67,7 +67,7 @@ public class RolePermissionController extends BaseController {
             //获取权限树
             final List<PermissionResponse> permissionResponses = ListEntityConvert.listCopyToAnotherList(PermissionResponse.class, all);
             //获取角色所有权限的ids
-            final List<Integer> list = iRolePermissionService.selectPermissionIdByRoleId(record.getRoleId());
+            final List<Long> list = iRolePermissionService.selectPermissionIdByRoleId(record.getRoleId());
             assert permissionResponses != null;
             List<PermissionResponse> rootMenus = permissionResponses.stream()
                     .filter(item -> item.getLevel().equals(0))
@@ -85,4 +85,3 @@ public class RolePermissionController extends BaseController {
     }
 
 }
-

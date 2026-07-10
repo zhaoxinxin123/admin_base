@@ -1,108 +1,85 @@
 package com.admin.base.entity.system;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.activerecord.Model;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * @author ZXX
- * @version 1.0
- * @date 2021/9/22 10:03 下午
- * @desc 操作日志记录表
+ * 操作日志表。
+ *
+ * <p>{@link Entity} 标识 JPA 实体；{@link Table} 绑定表名并声明日志列表页常用筛选索引。
+ * JSON、TEXT、TINYINT 等 MySQL 特定类型通过 {@link Column#columnDefinition()} 明确，
+ * 避免 Hibernate validate 与真实表结构出现类型歧义。</p>
  */
 @Data
-@EqualsAndHashCode(callSuper = false)
-@TableName("tb_sys_operation_log")
-public class OperationLog extends Model<OperationLog> implements Serializable {
+@Entity
+@Table(name = "tb_sys_operation_log", indexes = {
+        @Index(name = "idx_sys_operation_log_operation_name", columnList = "operation_name"),
+        @Index(name = "idx_sys_operation_log_business_type", columnList = "business_type"),
+        @Index(name = "idx_sys_operation_log_operation_time", columnList = "operation_time"),
+        @Index(name = "idx_sys_operation_log_success", columnList = "success")
+})
+public class OperationLog implements Serializable {
     private static final long serialVersionUID = 1L;
-    /**
-     * 日志主键
-     */
-//    @Excel(name = "操作序号", cellType = ColumnType.NUMERIC)
-    @TableId( type = IdType.AUTO)
-    private Integer operationId;
 
-    /**
-     * 操作模块
-     */
-//    @Excel(name = "操作模块")
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "operation_id")
+    private Long operationId;
+
+    @Column(name = "title", length = 64)
     private String title;
 
-    /**
-     * 业务类型（0其它 1新增 2修改 3删除）
-     */
-//    @Excel(name = "业务类型", readConverterExp = "0=其它,1=新增,2=修改,3=删除,4=授权,5=导出,6=导入,7=强退,8=生成代码,9=清空数据")
+    @Column(name = "business_type", columnDefinition = "TINYINT")
     private Integer businessType;
 
-
-    /**
-     * 请求方法
-     */
-//    @Excel(name = "请求方法")
+    @Column(name = "method")
     private String method;
 
-    /**
-     * 请求方式
-     */
-//    @Excel(name = "请求方式")
+    @Column(name = "request_method", length = 16)
     private String requestMethod;
 
-
-    /**
-     * 操作人员
-     */
-//    @Excel(name = "操作人员")
+    @Column(name = "operation_name", length = 64)
     private String operationName;
 
-
-    /**
-     * 请求url
-     */
-//    @Excel(name = "请求地址")
+    @Column(name = "operation_url")
     private String operationUrl;
 
-    /**
-     * 操作地址
-     */
-//    @Excel(name = "操作地址")
+    @Column(name = "operation_ip", length = 64)
     private String operationIp;
 
-
-    /**
-     * 请求参数
-     */
-//    @Excel(name = "请求参数")
+    @Column(name = "operation_param", columnDefinition = "json")
     private String operationParam;
 
-    /**
-     * 返回参数
-     */
-//    @Excel(name = "返回参数")
+    @Column(name = "json_result", columnDefinition = "json")
     private String jsonResult;
 
-    /**
-     * 操作状态（0正常 1异常）
-     */
-//    @Excel(name = "状态", readConverterExp = "0=正常,1=异常")
-    private Integer status;
+    @Column(name = "success", nullable = false, columnDefinition = "TINYINT")
+    private Integer success = 1;
 
-    /**
-     * 错误消息
-     */
-//    @Excel(name = "错误消息")
+    @Column(name = "status_code")
+    private Integer statusCode;
+
+    @Column(name = "error_msg", columnDefinition = "TEXT")
     private String errorMsg;
 
-//    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-//    @Excel(name = "操作时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
-    /**
-     * 操作时间
-     */
+    @Column(name = "operation_time", nullable = false)
     private LocalDateTime operationTime;
 
+    public Integer getStatus() {
+        return statusCode;
+    }
+
+    public void setStatus(Integer status) {
+        this.statusCode = status;
+        this.success = Integer.valueOf(200).equals(status) ? 1 : 0;
+    }
 }

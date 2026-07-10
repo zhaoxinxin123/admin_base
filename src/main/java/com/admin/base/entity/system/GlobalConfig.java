@@ -1,58 +1,44 @@
 package com.admin.base.entity.system;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.activerecord.Model;
+import com.admin.base.entity.AuditableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
- * @author ZXX
- * @version 1.0
- * @date 2021/9/16 10:58 上午
- * @desc
+ * 全局配置表。
+ *
+ * <p>{@link Entity} 标识 JPA 实体；{@link Table} 绑定 tb_sys_global_config 并保证
+ * config_key 唯一。显式 {@link Column} 用于固定 v2 schema 的列名、长度和非空约束。</p>
  */
 @Data
-@EqualsAndHashCode(callSuper = false)
-@TableName("tb_sys_global_config")
-public class GlobalConfig extends Model<GlobalConfig> implements Serializable {
-
+@EqualsAndHashCode(callSuper = true)
+@Entity
+@Table(name = "tb_sys_global_config", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_sys_global_config_key", columnNames = "config_key")
+})
+public class GlobalConfig extends AuditableEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * id
-     */
-    @TableId(value = "config_id", type = IdType.AUTO)
-    private Integer configId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "config_id")
+    private Long configId;
 
-    /**
-     * 配置名
-     */
+    @Column(name = "config_value", nullable = false, length = 512)
     private String configValue;
 
-    /**
-     * key
-     */
+    @Column(name = "config_key", nullable = false, length = 128)
     private String configKey;
 
-    /**
-     * 创建时间
-     */
-    private LocalDateTime createTime;
-
-    /**
-     * 备注
-     */
+    @Column(name = "note")
     private String note;
-
-    /**
-     * 更新时间
-     */
-    private LocalDateTime updateTime;
-
-
 }

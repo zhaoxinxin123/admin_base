@@ -10,7 +10,7 @@ import com.admin.base.dto.response.system.LoginResponse;
  */
 public class ResponseInit {
 
-    public static LoginResponse initLoginResponse(Integer adminId,String userName,  String nickname, String token) {
+    public static LoginResponse initLoginResponse(Long adminId,String userName,  String nickname, String token) {
         LoginResponse loginResponse = new LoginResponse();
         loginResponse.setAccount(userName);
         loginResponse.setAdminId(adminId);

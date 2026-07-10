@@ -20,7 +20,7 @@ public interface IAdminRoleService {
      * @param adminId 管理员Id
      * @param roleId  角色id
      */
-    void addAdminRole(Integer adminId, Integer roleId);
+    void addAdminRole(Long adminId, Integer roleId);
 
     /**
      * 查询管理员角色
@@ -28,7 +28,7 @@ public interface IAdminRoleService {
      * @param adminId 管理员id
      * @return 管理员角色列表
      */
-    List<Role> selectByAdminId(Integer adminId);
+    List<Role> selectByAdminId(Long adminId);
 
     /**
      * 根据登录名获取角色名

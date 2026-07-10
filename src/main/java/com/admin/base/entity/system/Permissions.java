@@ -1,73 +1,64 @@
 package com.admin.base.entity.system;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.admin.base.entity.AuditableEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
- * <p>
- * 菜单和按钮
- * </p>
+ * 系统权限/菜单表。
  *
- * @author ZXX
- * @since 2021-09-05
+ * <p>{@link Entity} 标识 JPA 实体；{@link Table} 绑定表名、查询索引和权限码唯一约束。
+ * {@link Column} 明确列名、长度、非空约束和 TINYINT 类型，便于 Hibernate validate
+ * 与数据库 schema 做严格比对。</p>
  */
 @Data
-@EqualsAndHashCode(callSuper = false)
-@TableName("tb_sys_permissions")
-public class Permissions implements Serializable {
-
+@EqualsAndHashCode(callSuper = true)
+@Entity
+@Table(name = "tb_sys_permissions", indexes = {
+        @Index(name = "idx_sys_permissions_parent_id", columnList = "parent_id"),
+        @Index(name = "idx_sys_permissions_state", columnList = "state")
+}, uniqueConstraints = {
+        @UniqueConstraint(name = "uk_sys_permissions_perm", columnNames = "perm")
+})
+public class Permissions extends AuditableEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "permission_id", type = IdType.AUTO)
-    private Integer permissionId;
-    /**
-     * 级别
-     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "permission_id")
+    private Long permissionId;
+
+    @Column(name = "level", nullable = false, columnDefinition = "TINYINT")
     private Integer level;
-    /**
-     * 上级Id
-     */
-    private Integer parentId;
-    /**
-     * 路径
-     */
+
+    @Column(name = "parent_id", nullable = false)
+    private Long parentId;
+
+    @Column(name = "path", nullable = false)
     private String path;
-    /**
-     * 权限名
-     */
+
+    @Column(name = "perm", nullable = false, length = 128)
     private String perm;
-    /**
-     * 是否需要认证
-     */
+
+    @Column(name = "require_auth", nullable = false, columnDefinition = "TINYINT")
     private Integer requireAuth;
-    /**
-     * 状态   1 正常
-     * 0 删除
-     */
+
+    @Column(name = "state", nullable = false, columnDefinition = "TINYINT")
     private Integer state;
-    /**
-     * url 可以存放图标或者其他
-     */
+
+    @Column(name = "url")
     private String url;
-    /**
-     * 标题
-     */
+
+    @Column(name = "title", nullable = false, length = 64)
     private String title;
-    /**
-     * 创建时间
-     */
-    private LocalDateTime createTime;
-
-    /**
-     * 更新时间
-     */
-    private LocalDateTime updateTime;
-
-
 }

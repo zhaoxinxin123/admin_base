@@ -40,17 +40,25 @@ public class EntityInit {
 
     public static AdminRole initAdminRole(Integer adminId, Integer roleId) {
         AdminRole adminRole = new AdminRole();
-        adminRole.setAdminId(adminId);
-        adminRole.setRoleId(roleId);
+        adminRole.setAdminId(toLongId(adminId));
+        adminRole.setRoleId(toLongId(roleId));
         adminRole.setCreateTime(LocalDateTime.now());
         return adminRole;
 
     }
 
+    public static AdminRole initAdminRole(Long adminId, Integer roleId) {
+        AdminRole adminRole = new AdminRole();
+        adminRole.setAdminId(adminId);
+        adminRole.setRoleId(toLongId(roleId));
+        adminRole.setCreateTime(LocalDateTime.now());
+        return adminRole;
+    }
+
     public static RolePermission initRolePermission(Integer roleId, Integer addId) {
         RolePermission rolePermission = new RolePermission();
-        rolePermission.setRoleId(roleId);
-        rolePermission.setPermissionId(addId);
+        rolePermission.setRoleId(toLongId(roleId));
+        rolePermission.setPermissionId(toLongId(addId));
         rolePermission.setCreateTime(LocalDateTime.now());
         return rolePermission;
     }
@@ -62,7 +70,7 @@ public class EntityInit {
         permissions.setPath(addPermissionParam.getPath());
         permissions.setTitle(addPermissionParam.getTitle());
         permissions.setUrl(addPermissionParam.getIcon());
-        permissions.setParentId(addPermissionParam.getParentId());
+        permissions.setParentId(toLongId(addPermissionParam.getParentId()));
         permissions.setState(YesOrNo.YES);
         permissions.setRequireAuth(YesOrNo.YES);
         permissions.setUpdateTime(LocalDateTime.now());
@@ -89,5 +97,9 @@ public class EntityInit {
         field2Obj.setAccessible(true);
         field1Obj.set(entity, createTime);
         field2Obj.set(entity, updateTime);
+    }
+
+    private static Long toLongId(Integer id) {
+        return id == null ? null : id.longValue();
     }
 }

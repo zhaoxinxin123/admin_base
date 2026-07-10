@@ -34,7 +34,7 @@ public class UserDetailsImpl implements UserDetails {
     /**
      * 管理员ID
      */
-    private Integer adminId;
+    private Long adminId;
 
     /**
      * 包含着用户对应的所有Role，在使用时调用者给对象注入roles

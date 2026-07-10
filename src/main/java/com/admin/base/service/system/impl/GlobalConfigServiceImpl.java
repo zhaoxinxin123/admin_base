@@ -1,86 +1,99 @@
 package com.admin.base.service.system.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.admin.base.common.PageResult;
 import com.admin.base.component.EntityInit;
+import com.admin.base.constant.ResponseCode;
 import com.admin.base.dto.request.system.AddGlobalConfigParam;
 import com.admin.base.dto.request.system.UpdateGlobalConfigParam;
-import com.admin.base.constant.ResponseCode;
 import com.admin.base.entity.system.GlobalConfig;
 import com.admin.base.exception.BusinessException;
-import com.admin.base.mapper.SysGlobalConfigMapper;
+import com.admin.base.repository.system.GlobalConfigRepository;
 import com.admin.base.service.system.IGlobalConfigService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.admin.base.utils.StringUtils;
+import jakarta.persistence.criteria.Predicate;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * <p>
- * tb_global_config 服务实现类
- * </p>
- *
- * @author ZXX
- * @since 2021-09-23
- */
 @Service
-public class GlobalConfigServiceImpl extends ServiceImpl<SysGlobalConfigMapper, GlobalConfig> implements IGlobalConfigService {
+@RequiredArgsConstructor
+public class GlobalConfigServiceImpl implements IGlobalConfigService {
+
+    private static final String CREATE_TIME_PROPERTY = "createTime";
+
+    private final GlobalConfigRepository globalConfigRepository;
 
     @Override
     public PageResult<GlobalConfig> selectByPage(Integer page, Integer size, String key, String note) {
-        IPage<GlobalConfig> iPage = new Page<>(page, size);
-        QueryWrapper<GlobalConfig> queryWrapper = new QueryWrapper<>();
-        queryWrapper.lambda().like(!StringUtils.isEmpty(key), GlobalConfig::getConfigKey, key)
-                .like(!StringUtils.isEmpty(note), GlobalConfig::getNote, note)
-                .orderByDesc(GlobalConfig::getCreateTime);
-        IPage<GlobalConfig> pageResult = this.baseMapper.selectPage(iPage, queryWrapper);
-        return new PageResult<>(pageResult.getRecords(), pageResult.getTotal(), page, size);
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, CREATE_TIME_PROPERTY));
+        Page<GlobalConfig> pageResult = globalConfigRepository.findAll(specification(key, note), pageable);
+        return new PageResult<>(pageResult.getContent(), pageResult.getTotalElements(), page, size);
     }
 
     @Override
     public void add(AddGlobalConfigParam addGlobalConfigParam) {
-        final GlobalConfig globalConfig = selectByKey(addGlobalConfigParam.getKey());
-        if (globalConfig != null) {
+        if (globalConfigRepository.existsByConfigKey(addGlobalConfigParam.getKey())) {
             throw new BusinessException(ResponseCode.CODE_ALERT, "该key值已存在");
         }
-        GlobalConfig newGlobalConfig = EntityInit.initSysGlobalConfig(addGlobalConfigParam);
-        this.baseMapper.insert(newGlobalConfig);
+        globalConfigRepository.save(EntityInit.initSysGlobalConfig(addGlobalConfigParam));
     }
 
     @Override
     public GlobalConfig selectByKey(String key) {
-        QueryWrapper<GlobalConfig> queryWrapper = new QueryWrapper<>();
-        queryWrapper.lambda().eq(GlobalConfig::getConfigKey, key);
-        return this.baseMapper.selectOne(queryWrapper);
+        return globalConfigRepository.findByConfigKey(key).orElse(null);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteByIds(List<Integer> configIds) {
-        if (configIds.size() > 0) {
-            this.baseMapper.deleteBatchIds(configIds);
+        if (configIds != null && !configIds.isEmpty()) {
+            globalConfigRepository.deleteAllById(configIds.stream().map(Integer::longValue).toList());
         }
     }
 
     @Override
     public void updateConfig(UpdateGlobalConfigParam updateGlobalConfigParam) {
-        final GlobalConfig globalConfigById = this.baseMapper.selectById(updateGlobalConfigParam.getConfigId());
-        final GlobalConfig globalConfigByKey = selectByKey(updateGlobalConfigParam.getKey());
+        Long configId = toLongId(updateGlobalConfigParam.getConfigId());
+        GlobalConfig globalConfigById = globalConfigRepository.findById(configId)
+                .orElseThrow(() -> new BusinessException(ResponseCode.CODE_ALERT, "配置项不存在"));
+        GlobalConfig globalConfigByKey = selectByKey(updateGlobalConfigParam.getKey());
         if (globalConfigByKey != null && !globalConfigById.getConfigId().equals(globalConfigByKey.getConfigId())) {
             throw new BusinessException(ResponseCode.CODE_ALERT, "该key值已存在");
         }
-        UpdateWrapper<GlobalConfig> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.lambda().eq(GlobalConfig::getConfigId, updateGlobalConfigParam.getConfigId())
-                .set(GlobalConfig::getConfigKey, updateGlobalConfigParam.getKey())
-                .set(GlobalConfig::getConfigValue, updateGlobalConfigParam.getValue())
-                .set(GlobalConfig::getNote, updateGlobalConfigParam.getNote())
-                .set(GlobalConfig::getUpdateTime,LocalDateTime.now());
-        this.baseMapper.update(null, updateWrapper);
+        globalConfigById.setConfigKey(updateGlobalConfigParam.getKey());
+        globalConfigById.setConfigValue(updateGlobalConfigParam.getValue());
+        globalConfigById.setNote(updateGlobalConfigParam.getNote());
+        globalConfigRepository.save(globalConfigById);
+    }
+
+    private Long toLongId(Integer id) {
+        return id == null ? null : id.longValue();
+    }
+
+    /**
+     * 构建配置列表动态查询条件。
+     *
+     * <p>这里的 Specification 等价于原 MyBatis QueryWrapper 的动态 where：
+     * key 和 note 为空时不追加条件；有值时使用 LIKE 做模糊查询。</p>
+     */
+    private Specification<GlobalConfig> specification(String key, String note) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (!StringUtils.isEmpty(key)) {
+                predicates.add(cb.like(root.get("configKey"), "%" + key + "%"));
+            }
+            if (!StringUtils.isEmpty(note)) {
+                predicates.add(cb.like(root.get("note"), "%" + note + "%"));
+            }
+            return cb.and(predicates.toArray(Predicate[]::new));
+        };
     }
 }

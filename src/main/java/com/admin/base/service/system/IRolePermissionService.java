@@ -40,7 +40,7 @@ public interface IRolePermissionService {
      * @param roleId  角色id
      * @return  权限Id列表
      */
-    List<Integer> selectPermissionIdByRoleId(Integer roleId);
+    List<Long> selectPermissionIdByRoleId(Long roleId);
 
     /**
      * 根据角色查询权限
