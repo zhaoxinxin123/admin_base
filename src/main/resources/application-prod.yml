@@ -15,6 +15,12 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate
+admin:
+  oauth2:
+    issuer-uri: ${ADMIN_OAUTH2_ISSUER_URI:}
+    audience: ${ADMIN_OAUTH2_AUDIENCE:admin-api}
+    username-claim: ${ADMIN_OAUTH2_USERNAME_CLAIM:preferred_username}
+    authorities-claim: ${ADMIN_OAUTH2_AUTHORITIES_CLAIM:authorities}
 # 生产环境 sysconfig：关键路径（uploadPath/downloadPath/localStore）不提供默认值，
 # 必须通过 PROD_* 环境变量显式配置；captchaType/resourcePrefix 有生产默认值
 sysconfig:

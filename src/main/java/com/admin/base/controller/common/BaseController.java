@@ -1,8 +1,8 @@
 package com.admin.base.controller.common;
 
 import com.admin.base.common.PageResult;
-import com.admin.base.config.security.UserDetailsImpl;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.admin.base.config.security.CurrentUserProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 import java.util.HashMap;
@@ -16,6 +16,9 @@ import java.util.Map;
  */
 @Controller
 public class BaseController {
+
+    @Autowired
+    private CurrentUserProvider currentUserProvider;
 
     /**
      * 解析表格数据   列表查询内容 Service中统一返回PageResult
@@ -37,7 +40,7 @@ public class BaseController {
      * @return 返回用户名
      */
     protected String getUserName() {
-        return ((UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getDetails()).getUsername();
+        return currentUserProvider.currentUser().username();
     }
 
 }
