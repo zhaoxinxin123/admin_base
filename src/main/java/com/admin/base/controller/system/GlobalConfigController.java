@@ -36,7 +36,7 @@ public class GlobalConfigController extends BaseController {
     @Resource
     private IGlobalConfigService iGlobalConfigService;
 
-    @PreAuthorize("hasAuthority('sys:settingList')")
+    @PreAuthorize("hasAuthority('sys:configList')")
     @PostMapping("/list")
     public JsonResponse list(@Validated ListGlobalConfigParam listGlobalConfigParam) {
         PageResult<GlobalConfig> pageResult = iGlobalConfigService.selectByPage(listGlobalConfigParam.getPage(), listGlobalConfigParam.getSize(), listGlobalConfigParam.getKey(), listGlobalConfigParam.getNote());
@@ -70,4 +70,3 @@ public class GlobalConfigController extends BaseController {
     }
 
 }
-

@@ -66,7 +66,7 @@ public class PermissionsController extends BaseController {
     }
 
     @PostMapping("/list")
-    @PreAuthorize("hasAuthority('sys:permission')")
+    @PreAuthorize("hasAuthority('sys:permissionList')")
     public JsonResponse list() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         final List<Permissions> all = iPermissionsService.getAllContainDisable();
         //获取权限树
@@ -74,7 +74,7 @@ public class PermissionsController extends BaseController {
         //获取角色所有权限的ids
         assert permissionResponses != null;
         List<PermissionResponse> rootMenus = permissionResponses.stream()
-                .filter(item -> item.getLevel().equals(0))
+                .filter(item -> item.getParentId() != null && item.getParentId().equals(0L))
                 .collect(Collectors.toList());
         rootMenus.forEach(rootMenu ->
                 rootMenu.setChild(MenuUtils.getChild(permissionResponses, rootMenu.getPermissionId(), rootMenu)));
@@ -82,4 +82,3 @@ public class PermissionsController extends BaseController {
         return JsonResponse.success(rootMenus);
     }
 }
-
