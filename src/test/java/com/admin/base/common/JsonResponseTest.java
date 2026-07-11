@@ -1,6 +1,6 @@
-package com.admin.base.common;
+package com.admin.base.shared.api;
 
-import com.admin.base.constant.ResponseCode;
+import com.admin.base.shared.constant.ResponseCode;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

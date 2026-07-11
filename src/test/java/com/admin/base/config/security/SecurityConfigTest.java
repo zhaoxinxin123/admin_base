@@ -1,4 +1,4 @@
-package com.admin.base.config.security;
+package com.admin.base.infrastructure.security;
 
 import com.admin.base.BaseApplication;
 import org.junit.jupiter.api.Test;

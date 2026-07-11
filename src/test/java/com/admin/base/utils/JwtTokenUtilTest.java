@@ -1,7 +1,7 @@
-package com.admin.base.utils;
+package com.admin.base.shared.util;
 
-import com.admin.base.config.security.TokenUser;
-import com.admin.base.config.security.UserDetailsImpl;
+import com.admin.base.infrastructure.security.TokenUser;
+import com.admin.base.infrastructure.security.UserDetailsImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;

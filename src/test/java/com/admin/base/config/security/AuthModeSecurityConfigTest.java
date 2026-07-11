@@ -1,7 +1,7 @@
-package com.admin.base.config.security;
+package com.admin.base.infrastructure.security;
 
-import com.admin.base.service.ICacheService;
-import com.admin.base.utils.JwtTokenUtil;
+import com.admin.base.infrastructure.cache.ICacheService;
+import com.admin.base.shared.util.JwtTokenUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.TestConfiguration;

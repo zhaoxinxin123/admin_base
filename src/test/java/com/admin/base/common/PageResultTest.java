@@ -1,4 +1,4 @@
-package com.admin.base.common;
+package com.admin.base.shared.api;
 
 import org.junit.jupiter.api.Test;
 

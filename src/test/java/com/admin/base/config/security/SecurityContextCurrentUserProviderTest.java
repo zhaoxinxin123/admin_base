@@ -1,6 +1,6 @@
-package com.admin.base.config.security;
+package com.admin.base.infrastructure.security;
 
-import com.admin.base.exception.BusinessException;
+import com.admin.base.shared.exception.BusinessException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
