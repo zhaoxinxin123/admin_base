@@ -29,18 +29,19 @@
 src/main/java/com/admin/base
 ├── auth/                         # 登录、验证码、认证 DTO 和开放接口
 │   ├── dto/
-│   └── web/
+│   └── controller/               # CaptchaController、LoginController
 ├── infrastructure/               # 横切基础设施
 │   ├── aop/                      # @Log、@RequestLogs、@RepeatInvoke 及切面
 │   ├── async/                    # 异步任务管理
 │   ├── cache/                    # Redis 缓存与锁
 │   ├── config/                   # Spring、Security、JPA、Redis、Druid 配置
-│   ├── security/                 # JWT/OAuth2、当前用户抽象、权限映射
-│   └── web/                      # 通用上传下载接口、BaseController
-├── shared/                       # 通用 API、常量、异常、领域基类、工具类
+│   ├── controller/               # BaseController、CommonController
+│   ├── filter/                   # MyTokenFilter、XssHttpServletRequestWrapper
+│   └── security/                 # JWT/OAuth2、当前用户抽象、权限映射
+├── shared/                       # 通用 API、常量、异常、实体基类、工具类
 │   ├── api/
 │   ├── constant/
-│   ├── domain/
+│   ├── entity/                   # AuditableEntity、CommonDate 等 JPA 基类
 │   ├── exception/
 │   ├── factory/                  # EntityFactory、ResponseFactory 等对象装配工厂
 │   └── util/
@@ -50,15 +51,19 @@ src/main/java/com/admin/base
 │   ├── log/
 │   ├── permission/
 │   └── role/
-│       ├── application/          # Service 接口与实现
-│       ├── domain/               # JPA Entity
+│       ├── controller/           # REST Controller
 │       ├── dto/                  # request/response DTO
-│       ├── persistence/          # Spring Data JPA repository
-│       └── web/                  # REST Controller
+│       ├── entity/               # JPA Entity
+│       ├── repository/           # Spring Data JPA repository
+│       └── service/              # Service 接口与实现
+│           └── impl/
 └── user/                         # Spring Security 用户加载与用户 DTO
+    ├── dto/
+    └── service/
+        └── impl/
 ```
 
-每个业务模块优先采用 `web -> application -> persistence/domain` 的调用方向：Controller 只做入参校验和响应包装，业务规则放在 Service，数据库访问放在 Repository。
+每个业务模块优先采用 `controller -> service -> repository/entity` 的调用方向：Controller 只做入参校验和响应包装，业务规则放在 Service，数据库访问放在 Repository。
 
 ## 快速开始
 
@@ -322,19 +327,20 @@ mvn test -Dtest=SchemaDraftTest,SchemaSeedConsistencyTest,SeedV2LogicCoverageTes
 
 ```text
 src/main/java/com/admin/base/system/notice
-├── application/
-│   ├── INoticeService.java
-│   └── NoticeServiceImpl.java
-├── domain/
-│   └── Notice.java
+├── controller/
+│   └── NoticeController.java
 ├── dto/
 │   ├── AddNoticeParam.java
 │   ├── NoticeResponse.java
 │   └── UpdateNoticeParam.java
-├── persistence/
+├── entity/
+│   └── Notice.java
+├── repository/
 │   └── NoticeRepository.java
-└── web/
-    └── NoticeController.java
+└── service/
+    ├── INoticeService.java
+    └── impl/
+        └── NoticeServiceImpl.java
 ```
 
 ### 1. 数据库
@@ -346,14 +352,14 @@ src/main/java/com/admin/base/system/notice
 
 ### 2. Entity
 
-- 放在 `system/<module>/domain/`。
+- 放在 `system/<module>/entity/`。
 - 显式声明 `@Table`、`@Column`、长度、非空约束。
 - 有审计字段时继承 `AuditableEntity`。
 - 字段类型和 SQL 保持一致，避免 `ddl-auto=validate` 失败。
 
 ### 3. Repository
 
-- 放在 `system/<module>/persistence/`。
+- 放在 `system/<module>/repository/`。
 - 继承 `JpaRepository<Entity, Long>`。
 - 优先使用派生查询或 JPQL，不新增 MyBatis Mapper/XML。
 
@@ -365,14 +371,14 @@ src/main/java/com/admin/base/system/notice
 
 ### 5. Service
 
-- 接口和实现放在 `system/<module>/application/`。
+- 接口和实现放在 `system/<module>/service/`（实现类在 `service/impl/`）。
 - 业务校验、唯一性校验、状态流转和跨表检查都放在 Service。
 - 业务失败抛 `BusinessException`，使用合适的 `ResponseCode`。
 - 分页结果沿用 `PageResult` 和 `BaseController#getDataTable(...)` 的形状。
 
 ### 6. Controller
 
-- 放在 `system/<module>/web/`。
+- 放在 `system/<module>/controller/`。
 - Controller 保持薄：校验 DTO、调用 Service、返回 `JsonResponse`。
 - 每个受保护接口添加明确的 `@PreAuthorize`。
 - 需要当前用户时使用 `BaseController#getUserName()` 或 `CurrentUserProvider`。

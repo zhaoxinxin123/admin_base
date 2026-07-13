@@ -3,7 +3,7 @@ package com.admin.base.infrastructure.aop;
 import com.admin.base.infrastructure.aop.annotation.Log;
 import com.admin.base.infrastructure.security.UserDetailsImpl;
 import com.admin.base.shared.constant.ResponseCode;
-import com.admin.base.system.log.domain.OperationLog;
+import com.admin.base.system.log.entity.OperationLog;
 import com.admin.base.infrastructure.async.AsyncManager;
 import com.admin.base.infrastructure.async.factory.AsyncFactory;
 import com.admin.base.shared.util.RequestUtils;

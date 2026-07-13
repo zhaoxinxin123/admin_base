@@ -2,14 +2,14 @@ package com.admin.base.shared.factory;
 
 import com.admin.base.shared.constant.AdminStatus;
 import com.admin.base.shared.constant.YesOrNo;
-import com.admin.base.system.admin.domain.Admin;
-import com.admin.base.system.admin.domain.AdminRole;
+import com.admin.base.system.admin.entity.Admin;
+import com.admin.base.system.admin.entity.AdminRole;
 import com.admin.base.system.config.dto.AddGlobalConfigParam;
-import com.admin.base.system.config.domain.GlobalConfig;
+import com.admin.base.system.config.entity.GlobalConfig;
 import com.admin.base.system.permission.dto.AddPermissionParam;
-import com.admin.base.system.permission.domain.Permissions;
-import com.admin.base.system.role.domain.Role;
-import com.admin.base.system.role.domain.RolePermission;
+import com.admin.base.system.permission.entity.Permissions;
+import com.admin.base.system.role.entity.Role;
+import com.admin.base.system.role.entity.RolePermission;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;

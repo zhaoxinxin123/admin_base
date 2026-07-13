@@ -1,12 +1,12 @@
 package com.admin.base.service.system;
 
-import com.admin.base.system.admin.application.IAdminRoleService;
-import com.admin.base.system.admin.application.IAdminService;
-import com.admin.base.system.config.application.IGlobalConfigService;
-import com.admin.base.system.log.application.IOperationLogService;
-import com.admin.base.system.permission.application.IPermissionsService;
-import com.admin.base.system.role.application.IRolePermissionService;
-import com.admin.base.system.role.application.IRoleService;
+import com.admin.base.system.admin.service.IAdminRoleService;
+import com.admin.base.system.admin.service.IAdminService;
+import com.admin.base.system.config.service.IGlobalConfigService;
+import com.admin.base.system.log.service.IOperationLogService;
+import com.admin.base.system.permission.service.IPermissionsService;
+import com.admin.base.system.role.service.IRolePermissionService;
+import com.admin.base.system.role.service.IRoleService;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;

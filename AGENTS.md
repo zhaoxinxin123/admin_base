@@ -63,18 +63,19 @@ For a fresh local database, import schema first and seed second. No migration sc
 com.admin.base
 ├── auth/                         # Login, captcha, auth DTOs and open endpoints
 │   ├── dto/
-│   └── web/
+│   └── controller/               # CaptchaController, LoginController
 ├── infrastructure/               # Cross-cutting infrastructure
 │   ├── aop/                      # @Log, @RequestLogs, @RepeatInvoke and aspects
 │   ├── async/                    # Async task management
 │   ├── cache/                    # Redis cache and locks
 │   ├── config/                   # Spring, Security, JPA, Redis, Druid config
+│   ├── controller/               # BaseController, CommonController (MVC controllers)
+│   ├── filter/                   # MyTokenFilter, XssHttpServletRequestWrapper
 │   ├── security/                 # JWT/OAuth2, current user abstraction, authority mapping
-│   └── web/                      # Common upload/download endpoints, BaseController, filters
-├── shared/                       # Shared API types, constants, exceptions, domain bases, utilities
+├── shared/                       # Shared API types, constants, exceptions, entity bases, utilities
 │   ├── api/
 │   ├── constant/
-│   ├── domain/
+│   ├── entity/                   # AuditableEntity, CommonDate (JPA mapped superclasses)
 │   ├── exception/
 │   ├── factory/                  # EntityFactory and ResponseFactory object assemblers
 │   └── util/
@@ -84,15 +85,19 @@ com.admin.base
 │   ├── log/
 │   ├── permission/
 │   └── role/
-│       ├── application/          # Service interfaces and implementations
-│       ├── domain/               # JPA entities
+│       ├── controller/           # REST controllers
 │       ├── dto/                  # Request/response DTOs
-│       ├── persistence/          # Spring Data JPA repositories
-│       └── web/                  # REST controllers
+│       ├── entity/               # JPA entities
+│       ├── repository/           # Spring Data JPA repositories
+│       └── service/              # Service interfaces and implementations
+│           └── impl/
 └── user/                         # Spring Security user loading and user DTOs
+    ├── dto/
+    └── service/                  # Service interfaces and implementations
+        └── impl/
 ```
 
-Business code should follow the dependency direction `web -> application -> persistence/domain`. Keep controllers thin, put business rules in application services, and keep database access inside persistence repositories.
+Business code should follow the dependency direction `controller -> service -> repository/entity`. Keep controllers thin, put business rules in service implementations, and keep database access inside repository interfaces.
 
 ## Auth Modes
 
@@ -120,8 +125,8 @@ OAuth2 setup notes are in `docs/modernization/oauth2-provider-setup.md`.
 
 - Use Spring Data JPA repositories for new code.
 - Do not add new MyBatis Mapper/XML code.
-- Entity classes live under `system/<module>/domain/` for system modules and should explicitly declare `@Table`, `@Column`, lengths, nullability and index/unique constraints that match SQL.
-- Repositories live under `system/<module>/persistence/` for system modules.
+- Entity classes live under `system/<module>/entity/` for system modules and should explicitly declare `@Table`, `@Column`, lengths, nullability and index/unique constraints that match SQL.
+- Repositories live under `system/<module>/repository/` for system modules.
 - Use `AuditableEntity` for tables with `create_time` and `update_time`.
 - Schema is managed by SQL under `docs/database/`; Hibernate runs with `ddl-auto=validate`.
 - Do not add database foreign keys. Use unique indexes, normal indexes, service-level checks and tests.
@@ -167,12 +172,12 @@ Use this checklist for new domain modules:
    - Update seed data if the module has menu/button permissions.
 
 2. **Entity**
-   - Add entity under `system/<module>/domain/` for system modules.
+   - Add entity under `system/<module>/entity/` for system modules.
    - Extend `AuditableEntity` when the table has `create_time`/`update_time`.
    - Keep entity fields aligned with v2 SQL.
 
 3. **Repository**
-   - Add `JpaRepository` under `system/<module>/persistence/`.
+   - Add `JpaRepository` under `system/<module>/repository/`.
    - Prefer derived queries or explicit JPA queries over ad hoc SQL.
 
 4. **DTO**
@@ -180,11 +185,11 @@ Use this checklist for new domain modules:
    - Use Bean Validation annotations for input constraints.
 
 5. **Service**
-   - Add the service interface and implementation under `system/<module>/application/`.
+   - Add the service interface and implementation under `system/<module>/service/` (implementation in `service/impl/`).
    - Enforce uniqueness, ownership and state transitions in Service.
 
 6. **Controller**
-   - Add controller under `system/<module>/web/`.
+   - Add controller under `system/<module>/controller/`.
    - Use `JsonResponse`, `@Validated`, and `@PreAuthorize`.
    - Use `CurrentUserProvider` or `BaseController#getUserName()` for current user logic.
 

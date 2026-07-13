@@ -1,6 +1,6 @@
 package com.admin.base.infrastructure.cache;
 
-import com.admin.base.system.admin.domain.Admin;
+import com.admin.base.system.admin.entity.Admin;
 import org.apache.commons.lang3.StringUtils;
 
 /**

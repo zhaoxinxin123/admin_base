@@ -1,6 +1,6 @@
 package com.admin.base.infrastructure.security;
 
-import com.admin.base.infrastructure.web.MyTokenFilter;
+import com.admin.base.infrastructure.filter.MyTokenFilter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;

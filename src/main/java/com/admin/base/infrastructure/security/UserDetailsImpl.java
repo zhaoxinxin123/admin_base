@@ -1,7 +1,7 @@
 package com.admin.base.infrastructure.security;
 
-import com.admin.base.system.admin.domain.Admin;
-import com.admin.base.system.role.domain.Role;
+import com.admin.base.system.admin.entity.Admin;
+import com.admin.base.system.role.entity.Role;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

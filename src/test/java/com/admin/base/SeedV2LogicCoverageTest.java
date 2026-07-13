@@ -1,11 +1,11 @@
 package com.admin.base;
 
-import com.admin.base.system.role.domain.RolePermission;
-import com.admin.base.system.admin.persistence.AdminRepository;
-import com.admin.base.system.config.persistence.GlobalConfigRepository;
-import com.admin.base.system.permission.persistence.PermissionsRepository;
-import com.admin.base.system.role.persistence.RolePermissionRepository;
-import com.admin.base.system.role.persistence.RoleRepository;
+import com.admin.base.system.role.entity.RolePermission;
+import com.admin.base.system.admin.repository.AdminRepository;
+import com.admin.base.system.config.repository.GlobalConfigRepository;
+import com.admin.base.system.permission.repository.PermissionsRepository;
+import com.admin.base.system.role.repository.RolePermissionRepository;
+import com.admin.base.system.role.repository.RoleRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;

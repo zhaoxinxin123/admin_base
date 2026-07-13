@@ -31,10 +31,41 @@ class PackageStructureBoundaryTest {
             assertThat(Files.isDirectory(path)).as(path.toString()).isTrue();
         }
 
+        // 业务模块下必须按 controller/service/repository/entity 划分子包
+        for (String module : List.of("admin", "role", "permission", "config", "log")) {
+            assertThat(Files.isDirectory(MAIN_PACKAGE.resolve("system/" + module + "/controller"))).isTrue();
+            assertThat(Files.isDirectory(MAIN_PACKAGE.resolve("system/" + module + "/service"))).isTrue();
+            assertThat(Files.isDirectory(MAIN_PACKAGE.resolve("system/" + module + "/repository"))).isTrue();
+            assertThat(Files.isDirectory(MAIN_PACKAGE.resolve("system/" + module + "/entity"))).isTrue();
+        }
+
+        // 旧的水平分层目录（按"技术"分）应当不存在
         assertThat(Files.exists(MAIN_PACKAGE.resolve("controller/system"))).isFalse();
         assertThat(Files.exists(MAIN_PACKAGE.resolve("service/system"))).isFalse();
         assertThat(Files.exists(MAIN_PACKAGE.resolve("repository/system"))).isFalse();
         assertThat(Files.exists(MAIN_PACKAGE.resolve("entity/system"))).isFalse();
+    }
+
+    @Test
+    void systemBusinessCodeDoesNotUseLegacyLayerDirectories() {
+        // 旧的 web/application/persistence/domain 命名必须彻底消失
+        for (String legacy : List.of("web", "application", "persistence", "domain")) {
+            assertThat(Files.exists(MAIN_PACKAGE.resolve("auth/" + legacy)))
+                    .as("auth/" + legacy).isFalse();
+            assertThat(Files.exists(MAIN_PACKAGE.resolve("system/admin/" + legacy)))
+                    .as("system/admin/" + legacy).isFalse();
+            assertThat(Files.exists(MAIN_PACKAGE.resolve("system/role/" + legacy)))
+                    .as("system/role/" + legacy).isFalse();
+            assertThat(Files.exists(MAIN_PACKAGE.resolve("shared/" + legacy)))
+                    .as("shared/" + legacy).isFalse();
+            assertThat(Files.exists(MAIN_PACKAGE.resolve("user/" + legacy)))
+                    .as("user/" + legacy).isFalse();
+        }
+
+        // infrastructure/web 已被拆分为 controller/ 与 filter/
+        assertThat(Files.exists(MAIN_PACKAGE.resolve("infrastructure/web"))).isFalse();
+        assertThat(Files.isDirectory(MAIN_PACKAGE.resolve("infrastructure/controller"))).isTrue();
+        assertThat(Files.isDirectory(MAIN_PACKAGE.resolve("infrastructure/filter"))).isTrue();
     }
 
     /**

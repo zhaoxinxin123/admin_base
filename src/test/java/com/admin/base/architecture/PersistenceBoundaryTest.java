@@ -28,7 +28,7 @@ class PersistenceBoundaryTest {
             String combined = files
                     .filter(path -> path.toString().endsWith(".java"))
                     .filter(path -> path.toString().contains("/controller/")
-                            || path.toString().matches(".*service/system/I[^/]+\\.java"))
+                            || path.toString().matches(".*/system/[a-z_]+/service/I[^/]+\\.java"))
                     .map(this::read)
                     .reduce("", String::concat);
 

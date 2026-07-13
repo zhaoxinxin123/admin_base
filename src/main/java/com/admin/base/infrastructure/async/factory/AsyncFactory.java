@@ -1,7 +1,7 @@
 package com.admin.base.infrastructure.async.factory;
 
-import com.admin.base.system.log.domain.OperationLog;
-import com.admin.base.system.log.application.IOperationLogService;
+import com.admin.base.system.log.entity.OperationLog;
+import com.admin.base.system.log.service.IOperationLogService;
 import com.admin.base.shared.util.spring.SpringUtils;
 
 import java.util.TimerTask;

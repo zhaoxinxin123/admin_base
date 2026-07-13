@@ -1,11 +1,11 @@
 {
     "schema_version": 1,
-    "commit": "8ce8c583b180e033aedf89736683560f37a9eeb6",
-    "indexed_at": "2026-07-13T10:01:23Z",
+    "commit": "32b755e27bfd42bbb1d2d3ccd1bd95c1ca64491a",
+    "indexed_at": "2026-07-13T10:01:55Z",
     "project": "Users-kyle-IdeaProjects-admin_base",
-    "nodes": 54,
-    "edges": 85,
-    "original_size": 1900544,
-    "compressed_size": 72531,
+    "nodes": 598,
+    "edges": 1433,
+    "original_size": 3604480,
+    "compressed_size": 367879,
     "compression_level": 3
 }
