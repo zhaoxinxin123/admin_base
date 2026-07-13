@@ -1,7 +1,7 @@
 package com.admin.base.system.config.application.impl;
 
 import com.admin.base.shared.api.PageResult;
-import com.admin.base.infrastructure.bootstrap.EntityInit;
+import com.admin.base.shared.factory.EntityFactory;
 import com.admin.base.shared.constant.ResponseCode;
 import com.admin.base.system.config.dto.AddGlobalConfigParam;
 import com.admin.base.system.config.dto.UpdateGlobalConfigParam;
@@ -43,7 +43,7 @@ public class GlobalConfigServiceImpl implements IGlobalConfigService {
         if (globalConfigRepository.existsByConfigKey(addGlobalConfigParam.getKey())) {
             throw new BusinessException(ResponseCode.CODE_ALERT, "该key值已存在");
         }
-        globalConfigRepository.save(EntityInit.initSysGlobalConfig(addGlobalConfigParam));
+        globalConfigRepository.save(EntityFactory.initSysGlobalConfig(addGlobalConfigParam));
     }
 
     @Override

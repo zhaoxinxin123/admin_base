@@ -1,7 +1,7 @@
 package com.admin.base.system.role.application.impl;
 
 import com.admin.base.shared.api.PageResult;
-import com.admin.base.infrastructure.bootstrap.EntityInit;
+import com.admin.base.shared.factory.EntityFactory;
 import com.admin.base.shared.constant.ResponseCode;
 import com.admin.base.system.role.domain.Role;
 import com.admin.base.shared.exception.BusinessException;
@@ -31,7 +31,7 @@ public class RoleServiceImpl implements IRoleService {
         if (checkExitsByRoleName(roleName)) {
             throw new BusinessException(ResponseCode.CODE_ALERT, "该角色名称已存在");
         }
-        Role role = roleRepository.save(EntityInit.initRole(roleName, note));
+        Role role = roleRepository.save(EntityFactory.initRole(roleName, note));
         iRolePermissionService.insertRolePermission(role.getRoleId().intValue(), permissionIds);
     }
 

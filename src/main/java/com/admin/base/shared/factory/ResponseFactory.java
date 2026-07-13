@@ -1,4 +1,4 @@
-package com.admin.base.infrastructure.bootstrap;
+package com.admin.base.shared.factory;
 
 import com.admin.base.auth.dto.LoginResponse;
 
@@ -8,7 +8,7 @@ import com.admin.base.auth.dto.LoginResponse;
  * @date 2021/9/13 11:20 上午
  * @desc
  */
-public class ResponseInit {
+public class ResponseFactory {
 
     public static LoginResponse initLoginResponse(Long adminId,String userName,  String nickname, String token) {
         LoginResponse loginResponse = new LoginResponse();

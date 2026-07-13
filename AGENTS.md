@@ -67,7 +67,6 @@ com.admin.base
 ├── infrastructure/               # Cross-cutting infrastructure
 │   ├── aop/                      # @Log, @RequestLogs, @RepeatInvoke and aspects
 │   ├── async/                    # Async task management
-│   ├── bootstrap/                # Startup initialization
 │   ├── cache/                    # Redis cache and locks
 │   ├── config/                   # Spring, Security, JPA, Redis, Druid config
 │   ├── security/                 # JWT/OAuth2, current user abstraction, authority mapping
@@ -77,6 +76,7 @@ com.admin.base
 │   ├── constant/
 │   ├── domain/
 │   ├── exception/
+│   ├── factory/                  # EntityFactory and ResponseFactory object assemblers
 │   └── util/
 ├── system/                       # System management bounded contexts
 │   ├── admin/

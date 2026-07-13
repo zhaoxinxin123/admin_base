@@ -2,8 +2,8 @@ package com.admin.base.system.admin.application.impl;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.admin.base.shared.api.PageResult;
-import com.admin.base.infrastructure.bootstrap.EntityInit;
-import com.admin.base.infrastructure.bootstrap.ResponseInit;
+import com.admin.base.shared.factory.EntityFactory;
+import com.admin.base.shared.factory.ResponseFactory;
 import com.admin.base.infrastructure.security.UserDetailsImpl;
 import com.admin.base.infrastructure.security.UserDetailsServiceImpl;
 import com.admin.base.shared.constant.RedisPrefix;
@@ -60,7 +60,7 @@ public class AdminServiceImpl implements IAdminService {
         if (adminRepository.existsByUserName(username)) {
             throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "该账号已存在，请重新设置！");
         }
-        Admin admin = EntityInit.initAdmin(username, passwordEncoder.encode(password), password, nickName);
+        Admin admin = EntityFactory.initAdmin(username, passwordEncoder.encode(password), password, nickName);
         Admin saved = adminRepository.save(admin);
         log.info("插入管理员成功：Id为{}", saved.getAdminId());
         for (Integer roleId : roleIds) {
@@ -120,7 +120,7 @@ public class AdminServiceImpl implements IAdminService {
         String token = jwtTokenUtil.generateToken(userDetails);
 
         iCacheService.saveToken(token, userDetails.getAdminId().toString());
-        return ResponseInit.initLoginResponse(
+        return ResponseFactory.initLoginResponse(
                 userDetails.getAdminId(),
                 userDetails.getUsername(),
                 userDetails.getNickName(),

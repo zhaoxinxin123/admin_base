@@ -33,7 +33,6 @@ src/main/java/com/admin/base
 ├── infrastructure/               # 横切基础设施
 │   ├── aop/                      # @Log、@RequestLogs、@RepeatInvoke 及切面
 │   ├── async/                    # 异步任务管理
-│   ├── bootstrap/                # 启动初始化组件
 │   ├── cache/                    # Redis 缓存与锁
 │   ├── config/                   # Spring、Security、JPA、Redis、Druid 配置
 │   ├── security/                 # JWT/OAuth2、当前用户抽象、权限映射
@@ -43,6 +42,7 @@ src/main/java/com/admin/base
 │   ├── constant/
 │   ├── domain/
 │   ├── exception/
+│   ├── factory/                  # EntityFactory、ResponseFactory 等对象装配工厂
 │   └── util/
 ├── system/                       # 系统管理业务域
 │   ├── admin/
@@ -84,7 +84,6 @@ v2 数据库脚本位于：
 
 ```text
 docs/database/admin-base-schema-v2.sql
-docs/database/admin-base-schema-v2-migration.sql
 docs/database/admin-base-seed-v2.sql
 ```
 
@@ -96,12 +95,7 @@ mysql -uroot -p admin_base < docs/database/admin-base-schema-v2.sql
 mysql -uroot -p admin_base < docs/database/admin-base-seed-v2.sql
 ```
 
-已有旧库迁移到 v2：
-
-```bash
-mysql -uroot -p admin_base < docs/database/admin-base-schema-v2-migration.sql
-mysql -uroot -p admin_base < docs/database/admin-base-seed-v2.sql
-```
+当前仓库没有维护增量 migration 脚本；旧库升级时请先备份，再根据 v2 全量 schema 做受控迁移。
 
 导入后会得到：
 
@@ -157,6 +151,7 @@ mvn test
 
 # 运行重点测试类
 mvn test -Dtest=SeedV2LogicCoverageTest
+mvn test -Dtest=FullApiAuthorizationIntegrationTest
 mvn test -Dtest=OAuth2AuthorityMapperTest,OAuth2AudienceValidatorTest,OAuth2PropertiesTest,AuthModeSecurityConfigTest,OAuth2ResourceServerTest
 
 # 启动，默认 profile 为 test
@@ -240,7 +235,7 @@ curl -s http://localhost:9999/admin-api/open/captchaImage | jq
 curl -s -X POST http://localhost:9999/admin-api/open/login \
   -H 'Content-Type: application/json' \
   -d '{
-    "userName": "admin",
+    "username": "admin",
     "password": "123456",
     "code": "验证码",
     "uuid": "上一步返回的 uuid"
@@ -302,8 +297,8 @@ curl -s -X POST http://localhost:9999/admin-api/admin/getMenu \
 新增或修改数据库对象时，按以下顺序处理：
 
 1. 修改 `docs/database/admin-base-schema-v2.sql`，保证全量建库脚本正确。
-2. 修改 `docs/database/admin-base-schema-v2-migration.sql`，保证旧库可迁移。
-3. 修改 `docs/database/admin-base-seed-v2.sql`，保证默认数据、权限和角色权限关系完整。
+2. 修改 `docs/database/admin-base-seed-v2.sql`，保证默认数据、权限和角色权限关系完整。
+3. 如任务需要增量升级，新增并记录 migration 脚本，同时更新 `SchemaSeedConsistencyTest`、README 和 `AGENTS.md`。
 4. 实体类补齐 `@Table`、`@Column`、长度、空值约束和索引对应关系。
 5. 运行 schema/seed 测试：
 
@@ -344,7 +339,7 @@ src/main/java/com/admin/base/system/notice
 
 ### 1. 数据库
 
-- 在 `docs/database/` 更新 schema、migration 和 seed。
+- 在 `docs/database/` 更新 schema 和 seed；如需要旧库增量升级，再新增 migration。
 - 表名使用清晰的业务前缀，例如 `tb_sys_notice`。
 - 添加主键、唯一索引、查询索引和审计列。
 - 不添加数据库外键；跨表一致性放到 Service 校验和测试中。
@@ -412,6 +407,9 @@ mvn test -Dtest=JsonResponseTest,PageResultTest,BusinessExceptionTest,JwtTokenUt
 
 # JWT 安全边界
 mvn test -Dtest=SecurityConfigTest,SecurityBoundaryTest,OpenEndpointTest
+
+# JWT 全接口、管理员/部分权限用户、操作日志
+mvn test -Dtest=FullApiAuthorizationIntegrationTest
 
 # OAuth2
 mvn test -Dtest=AuthModePropertiesTest,AuthModeSecurityConfigTest,OAuth2AuthorityMapperTest,OAuth2AudienceValidatorTest,OAuth2PropertiesTest,OAuth2ResourceServerTest,SecurityContextCurrentUserProviderTest

@@ -50,7 +50,7 @@ public class PermissionsController extends BaseController {
     }
 
     @PostMapping("/update")
-    @PreAuthorize("hasAuthority('sys:permission:update')")
+    @PreAuthorize("hasAuthority('sys:permission:edit')")
     @Log(title = "sys", businessType = BusinessType.UPDATE)
     public JsonResponse update(@Validated UpdatePermissionParam updatePermissionParam) {
         iPermissionsService.updatePermission(updatePermissionParam);

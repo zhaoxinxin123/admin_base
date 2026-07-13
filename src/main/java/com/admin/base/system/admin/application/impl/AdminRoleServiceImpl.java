@@ -1,6 +1,6 @@
 package com.admin.base.system.admin.application.impl;
 
-import com.admin.base.infrastructure.bootstrap.EntityInit;
+import com.admin.base.shared.factory.EntityFactory;
 import com.admin.base.system.admin.domain.Admin;
 import com.admin.base.system.admin.domain.AdminRole;
 import com.admin.base.system.role.domain.Role;
@@ -44,7 +44,7 @@ public class AdminRoleServiceImpl implements IAdminRoleService {
         if (adminRoleRepository.existsByAdminIdAndRoleId(adminId, roleIdValue)) {
             return;
         }
-        adminRoleRepository.save(EntityInit.initAdminRole(adminId, roleId));
+        adminRoleRepository.save(EntityFactory.initAdminRole(adminId, roleId));
     }
 
     @Override
