@@ -41,6 +41,10 @@ class BaseApplicationTests {
     @Autowired
     private WebApplicationContext context;
 
+    /**
+     * 在每个测试执行前基于 WebApplicationContext 重新构建带 springSecurity() 的 MockMvc，
+     * 确保安全过滤器链和 Spring 上下文被正确装配。
+     */
     @BeforeEach
     public void setUp() {
         mockMvc = MockMvcBuilders
@@ -49,6 +53,10 @@ class BaseApplicationTests {
                 .build();
     }
 
+    /**
+     * 测试 GET /open/captchaImage 公开端点：匿名访问成功并返回 JsonResponse，
+     * 响应数据可被反序列化为 CaptchaResponse，证明验证码接口对外契约稳定。
+     */
     @Test
     void getCode() throws Exception {
         MvcResult mvcResult = mockMvc
@@ -63,6 +71,10 @@ class BaseApplicationTests {
         System.out.println(captchaResponse.toString());
     }
 
+    /**
+     * 测试以 sys:adminList 权限登录的 Mock 用户能成功调用 /admin_role/list 接口，
+     * 验证带分页参数 ListAdminParam 的请求返回 200 状态码。
+     */
     @Test
     @WithMockUser(username = "admin", authorities = {"sys:adminList"})
     void roleList() throws Exception {

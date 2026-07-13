@@ -22,6 +22,10 @@ class SecurityBoundaryTest {
     @Autowired
     private MockMvc mockMvc;
 
+    /**
+     * 测试受保护端点 /admin_role/list 在没有认证信息时返回 401 Unauthorized，
+     * 验证 Spring Security 的过滤器链能正确拦截匿名请求。
+     */
     @Test
     void protectedEndpointRejectsAnonymousRequest() throws Exception {
         mockMvc.perform(post("/admin_role/list")

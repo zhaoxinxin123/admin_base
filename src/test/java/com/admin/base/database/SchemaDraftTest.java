@@ -13,6 +13,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class SchemaDraftTest {
 
+    /**
+     * 测试 v2 schema 草稿：必须包含 7 张系统核心表（admin/role/permissions/admin_role/role_permission/global_config/operation_log），
+     * 且不能出现已删除的 tb_keys/tb_records 和外键定义，确保 schema 符合"无外键、用唯一索引"的项目约定。
+     */
     @Test
     void schemaDraftContainsOnlyRetainedTablesAndNoForeignKeys() throws IOException {
         String ddl = Files.readString(Path.of("docs/database/admin-base-schema-v2.sql")).toLowerCase();

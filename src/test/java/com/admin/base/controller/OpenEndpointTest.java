@@ -24,7 +24,8 @@ class OpenEndpointTest {
     private MockMvc mockMvc;
 
     /**
-     * 验证验证码端点公开可访问且返回标准 JsonResponse 结构。
+     * 测试 /open/captchaImage 公开端点：无需任何认证即可访问，并返回标准 JsonResponse
+     * 结构（code、msg、data 三个字段都存在），用于保证登录前流程的连通性。
      * 依赖 192.168.3.3 的 MySQL/Redis 可用。
      */
     @Test

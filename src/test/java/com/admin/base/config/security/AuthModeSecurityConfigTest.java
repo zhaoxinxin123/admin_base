@@ -33,6 +33,10 @@ class AuthModeSecurityConfigTest {
             )
             .withAllowBeanDefinitionOverriding(true);
 
+    /**
+     * 测试当 admin.auth.mode=jwt 时，Spring 上下文只加载 SecurityConfig 与 JwtSecurityConfig，
+     * 不会装配 OAuth2ResourceServerSecurityConfig，确保本地 JWT 模式互斥生效。
+     */
     @Test
     void jwtModeLoadsJwtConfig() {
         contextRunner.withPropertyValues("admin.auth.mode=jwt")
@@ -43,6 +47,11 @@ class AuthModeSecurityConfigTest {
                 });
     }
 
+    /**
+     * 测试当 admin.auth.mode=oauth2 时，Spring 上下文装配 SecurityConfig 与
+     * OAuth2ResourceServerSecurityConfig，而不加载 JwtSecurityConfig，验证两种安全配置
+     * 通过 admin.auth.mode 互斥切换。
+     */
     @Test
     void oauth2ModeLoadsOauth2Config() {
         contextRunner.withPropertyValues("admin.auth.mode=oauth2")
@@ -53,9 +62,18 @@ class AuthModeSecurityConfigTest {
                 });
     }
 
+    /**
+     * 测试专用的 Spring 配置类：通过 @Bean 提供 UserDetailsService、HandlerExceptionResolver、
+     * JwtDecoder、JwtTokenUtil、ICacheService、ObjectMapper、JwtAuthenticationConverter 等桩对象，
+     * 让 SecurityConfig/JwtSecurityConfig/OAuth2ResourceServerSecurityConfig 能在 ApplicationContextRunner
+     * 中成功装配。
+     */
     @TestConfiguration
     static class SecurityTestBeans {
 
+        /**
+         * 提供一个最小可用的 UserDetailsService，对任意用户名返回带 sys:adminList 权限的 User。
+         */
         @Bean
         UserDetailsService userDetailsService() {
             return username -> User.withUsername(username)
@@ -64,36 +82,58 @@ class AuthModeSecurityConfigTest {
                     .build();
         }
 
+        /**
+         * 提供一个 Mock 的 HandlerExceptionResolver，满足 SecurityConfig 中 @Qualifier 依赖。
+         */
         @Bean
         HandlerExceptionResolver handlerExceptionResolver() {
             return mock(HandlerExceptionResolver.class);
         }
 
+        /**
+         * 提供真实的 InvalidAuthenticationEntryPoint Bean，让 SecurityConfig 中的认证失败入口
+         * 在测试上下文里也能被注入。
+         */
         @Bean
         InvalidAuthenticationEntryPoint invalidAuthenticationEntryPoint() {
             return new InvalidAuthenticationEntryPoint();
         }
 
+        /**
+         * 提供一个 Mock 的 JwtDecoder，由测试自行桩出 decode 行为，模拟 OAuth2 资源服务器解码。
+         */
         @Bean
         JwtDecoder jwtDecoder() {
             return mock(JwtDecoder.class);
         }
 
+        /**
+         * 提供一个 Mock 的 JwtTokenUtil，避免 JwtSecurityConfig 在装配时真正调用 JJWT 接口。
+         */
         @Bean
         JwtTokenUtil jwtTokenUtil() {
             return mock(JwtTokenUtil.class);
         }
 
+        /**
+         * 提供一个 Mock 的 ICacheService，屏蔽真实 Redis 依赖，使安全相关配置在无 Redis 时也能加载。
+         */
         @Bean
         ICacheService cacheService() {
             return mock(ICacheService.class);
         }
 
+        /**
+         * 提供一个全新的 ObjectMapper Bean，覆盖 Spring Boot 自动装配，测试上下文里统一序列化行为。
+         */
         @Bean
         ObjectMapper objectMapper() {
             return new ObjectMapper();
         }
 
+        /**
+         * 提供一个默认的 JwtAuthenticationConverter，供 OAuth2ResourceServerSecurityConfig 装配。
+         */
         @Bean
         JwtAuthenticationConverter jwtAuthenticationConverter() {
             return new JwtAuthenticationConverter();

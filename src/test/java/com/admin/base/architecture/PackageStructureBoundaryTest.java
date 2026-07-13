@@ -12,6 +12,11 @@ class PackageStructureBoundaryTest {
 
     private static final Path MAIN_PACKAGE = Path.of("src/main/java/com/admin/base");
 
+    /**
+     * 测试业务代码已迁移到按特性（feature）划分的包结构：system/admin、system/role、
+     * system/permission、system/config、system/log 这五个目录必须存在；
+     * 同时确认旧的水平分层目录（controller/system、service/system 等）已彻底移除。
+     */
     @Test
     void systemBusinessCodeUsesFeaturePackages() {
         List<Path> expectedFeaturePackages = List.of(
@@ -32,6 +37,10 @@ class PackageStructureBoundaryTest {
         assertThat(Files.exists(MAIN_PACKAGE.resolve("entity/system"))).isFalse();
     }
 
+    /**
+     * 测试新引入的 shared（公共契约/异常/util 等）和 infrastructure（AOP/缓存/安全等）两个包存在，
+     * 同时确认旧的水平技术分层目录 common、component、asp、filter、manager 已被废弃。
+     */
     @Test
     void sharedAndInfrastructurePackagesReplaceHorizontalTechnicalBuckets() {
         assertThat(Files.isDirectory(MAIN_PACKAGE.resolve("shared"))).isTrue();

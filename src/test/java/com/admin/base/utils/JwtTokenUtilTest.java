@@ -28,6 +28,10 @@ class JwtTokenUtilTest {
 
     private JwtTokenUtil jwtTokenUtil;
 
+    /**
+     * 在每个测试执行前新建 JwtTokenUtil 实例，并通过 ReflectionTestUtils 注入
+     * Base64 编码的密钥、过期秒数（7200）和 Bearer 前缀，模拟 Spring 配置绑定。
+     */
     @BeforeEach
     void setUp() {
         jwtTokenUtil = new JwtTokenUtil();
@@ -36,6 +40,11 @@ class JwtTokenUtilTest {
         ReflectionTestUtils.setField(jwtTokenUtil, "tokenHead", "Bearer ");
     }
 
+    /**
+     * 测试 JWT 往返一致性：通过 UserDetailsImpl 生成 token 后，
+     * 应当能从 token 中读回用户名、密码、昵称、adminId、权限列表，
+     * 并验证 getAuthorities() 不会因角色列表为空而抛 NPE。
+     */
     @Test
     void generateTokenAndGetUserDetailRoundTrip() {
         UserDetailsImpl userDetails = new UserDetailsImpl();
@@ -68,6 +77,10 @@ class JwtTokenUtilTest {
         assertThat(restoredImpl.getAuthorities()).isNotEmpty();
     }
 
+    /**
+     * 测试使用合法 token 与对应的 UserDetails 调用 validateToken 时返回 true，
+     * 验证签名、过期时间等校验通过。
+     */
     @Test
     void validateTokenReturnsTrueForValidToken() {
         UserDetailsImpl userDetails = new UserDetailsImpl();
@@ -79,6 +92,10 @@ class JwtTokenUtilTest {
         assertThat(jwtTokenUtil.validateToken(token, userDetails)).isTrue();
     }
 
+    /**
+     * 测试当传入的 UserDetails 用户名与 token 中的 subject 不一致时，
+     * validateToken 返回 false，确保 token 不会被冒名顶替使用。
+     */
     @Test
     void validateTokenReturnsFalseForWrongUsername() {
         UserDetailsImpl userDetails = new UserDetailsImpl();
@@ -95,6 +112,11 @@ class JwtTokenUtilTest {
         assertThat(jwtTokenUtil.validateToken(token, other)).isFalse();
     }
 
+    /**
+     * 测试 TokenUser 经 Jackson 序列化再反序列化后字段保持一致，
+     * 并验证 toUserDetails() 能将 TokenUser 正确转换为 UserDetailsImpl，
+     * 保证 token payload 在不同阶段的契约稳定。
+     */
     @Test
     void tokenUserRoundTripViaJackson() throws Exception {
         TokenUser original = new TokenUser("admin", "pw", "管理员", 1L,

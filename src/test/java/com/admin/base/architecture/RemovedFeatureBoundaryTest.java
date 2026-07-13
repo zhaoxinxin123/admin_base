@@ -10,6 +10,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RemovedFeatureBoundaryTest {
 
+    /**
+     * 测试已删除的功能模块不会再次出现在主源码中：entity/keys、dto/request/keys、
+     * dto/response/keys 这三个被移除的 keys 目录以及工具类 utils/Boyer 都不应再存在。
+     */
     @Test
     void removedFeaturePackagesDoNotExist() {
         List<Path> removedPaths = List.of(

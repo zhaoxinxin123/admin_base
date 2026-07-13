@@ -77,6 +77,10 @@ class FullApiAuthorizationIntegrationTest {
     @Value("${sysconfig.download-path}")
     private Path downloadPath;
 
+    /**
+     * 在每个集成测试执行前重置数据库：清空 7 张系统表后重新执行 v2 种子脚本，
+     * 并创建只读权限的 limited 用户，同时建立下载目录，保证后续 API 调用有干净的种子环境。
+     */
     @BeforeEach
     void resetDatabase() throws Exception {
         jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS=0");
@@ -96,6 +100,11 @@ class FullApiAuthorizationIntegrationTest {
         Files.createDirectories(downloadPath);
     }
 
+    /**
+     * 测试 admin 超级用户可访问系统全部 API（查询、菜单、角色、权限、配置、日志、上传下载），
+     * 并能成功完成 admin/role/permission/config/log 的增删改流程；最后验证所有变更型操作
+     * 都被异步写入 tb_sys_operation_log 且不会泄露明文密码。
+     */
     @Test
     void adminCanExerciseAllSystemApisAndMutationLogsAreComplete() throws Exception {
         String token = login("admin", "123456");
@@ -187,6 +196,11 @@ class FullApiAuthorizationIntegrationTest {
         assertThat(leakedPasswords).isZero();
     }
 
+    /**
+     * 测试只读权限的 limited 用户：可访问公开端点（验证码）、登录、所有已分配查询权限的 API
+     * 以及公共上传/下载接口，但所有变更型接口（admin/role/permission/config/log 的增删改）
+     * 都会被拦截并返回"没有权限访问"业务错误。
+     */
     @Test
     void limitedUserCanOnlyAccessPublicAuthenticatedAndGrantedPermissionApis() throws Exception {
         okJson(get("/open/captchaImage"));
@@ -222,6 +236,10 @@ class FullApiAuthorizationIntegrationTest {
         forbidden(postForm("/sys_operation_log/deleteBatch", token, "logIds", "1"));
     }
 
+    /**
+     * 在数据库中创建 limited 用户、ROLE_LIMIT 角色，并把 admin 与该角色绑定；
+     * 再为该角色分配 11 个只读相关的权限 id，用于模拟低权限用户的访问场景。
+     */
     private void createLimitedUser() {
         jdbcTemplate.update("""
                 insert into tb_sys_admin (admin_id, nickname, user_name, password, state, create_time, update_time)
@@ -237,6 +255,14 @@ class FullApiAuthorizationIntegrationTest {
         }
     }
 
+    /**
+     * 模拟用户登录流程：先获取 /open/captchaImage 中的 uuid 与验证码，
+     * 再携带用户名、密码调用 /open/login，返回响应 data.token 字段。
+     *
+     * @param username 登录用户名
+     * @param password 登录密码
+     * @return 登录后下发的 JWT token
+     */
     private String login(String username, String password) throws Exception {
         JsonNode captcha = objectMapper.readTree(okJson(get("/open/captchaImage")).andReturn().getResponse().getContentAsString());
         String uuid = captcha.at("/data/uuid").asText();
@@ -252,6 +278,12 @@ class FullApiAuthorizationIntegrationTest {
         return loginResponse.at("/data/token").asText();
     }
 
+    /**
+     * 公共端点回归：使用 token 上传一个 txt 文件，再分别通过 /common/download
+     * 和 /common/download/resource2 两种下载方式访问同一资源，覆盖通用上传/下载流程。
+     *
+     * @param token 当前登录用户的 JWT
+     */
     private void exerciseCommonEndpoints(String token) throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "sample.txt", MediaType.TEXT_PLAIN_VALUE, "hello".getBytes(StandardCharsets.UTF_8));
         okJson(multipart("/common/upload").file(file).header("Authorization", bearer(token)));
@@ -269,12 +301,24 @@ class FullApiAuthorizationIntegrationTest {
                 .andExpect(status().isOk());
     }
 
+    /**
+     * 公共断言：执行请求并断言 HTTP 200 且业务 code = CODE_OK（200）。
+     *
+     * @param request MockMvc 请求构造器
+     * @return ResultActions 用于在调用方继续追加断言
+     */
     private org.springframework.test.web.servlet.ResultActions okJson(MockHttpServletRequestBuilder request) throws Exception {
         return mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(ResponseCode.CODE_OK));
     }
 
+    /**
+     * 公共断言：执行请求并断言 HTTP 200 但业务 code = CODE_TOKEN_ERROR（401），
+     * msg = "没有权限访问"，用于验证 @PreAuthorize 拒绝受限操作。
+     *
+     * @param request MockMvc 请求构造器
+     */
     private void forbidden(MockHttpServletRequestBuilder request) throws Exception {
         mockMvc.perform(request)
                 .andExpect(status().isOk())
@@ -282,6 +326,14 @@ class FullApiAuthorizationIntegrationTest {
                 .andExpect(jsonPath("$.msg").value("没有权限访问"));
     }
 
+    /**
+     * 构造一个带 Authorization 头、JSON 请求体的 POST 请求构造器。
+     *
+     * @param url   请求路径
+     * @param token 当前登录用户的 JWT
+     * @param body  请求体对象（由 ObjectMapper 序列化为 JSON）
+     * @return MockMvc 请求构造器
+     */
     private MockHttpServletRequestBuilder postJson(String url, String token, Object body) throws Exception {
         return post(url)
                 .header("Authorization", bearer(token))
@@ -289,6 +341,14 @@ class FullApiAuthorizationIntegrationTest {
                 .content(objectMapper.writeValueAsString(body));
     }
 
+    /**
+     * 构造一个带 Authorization 头、application/x-www-form-urlencoded 请求体的 POST 请求构造器。
+     *
+     * @param url   请求路径
+     * @param token 当前登录用户的 JWT
+     * @param pairs 键值对依次排列的表单参数（key1, value1, key2, value2, ...）
+     * @return MockMvc 请求构造器
+     */
     private MockHttpServletRequestBuilder postForm(String url, String token, String... pairs) {
         MockHttpServletRequestBuilder request = post(url)
                 .header("Authorization", bearer(token))
@@ -299,18 +359,34 @@ class FullApiAuthorizationIntegrationTest {
         return request;
     }
 
+    /**
+     * 在 token 前面拼接 "Bearer " 前缀，方便直接写入 Authorization 头。
+     */
     private String bearer(String token) {
         return "Bearer " + token;
     }
 
+    /**
+     * 生成带前缀且全局唯一的测试名（在 prefix 之后拼接纳秒时间戳），避免不同测试间数据冲突。
+     */
     private String unique(String prefix) {
         return prefix + System.nanoTime();
     }
 
+    /**
+     * 取纳秒时间戳的第 8~14 位作为唯一数字串，常用于拼接在 perm、role_name 等数据库唯一键后。
+     */
     private String uniqueDigits() {
         return Long.toString(System.nanoTime()).substring(8, 14);
     }
 
+    /**
+     * 轮询 tb_sys_operation_log 等待指定 operationName 下的所有 expectedUrls 都出现，
+     * 用于应对操作日志的异步写入；最多等待 5 秒，超时则断言失败。
+     *
+     * @param operationName 操作人（与 operation_name 字段对应）
+     * @param expectedUrls  期望出现的一组 operation_url
+     */
     private void waitForMutationLogs(String operationName, Set<String> expectedUrls) throws InterruptedException {
         long deadline = System.nanoTime() + Duration.ofSeconds(5).toNanos();
         Set<String> seen = new LinkedHashSet<>();
@@ -330,6 +406,10 @@ class FullApiAuthorizationIntegrationTest {
         assertThat(seen).containsAll(expectedUrls);
     }
 
+    /**
+     * 拼接 JdbcTemplate 查询的参数数组：第一个元素是 operationName，
+     * 之后依次放入 urls 集合中的每个 url。
+     */
     private Object[] parameters(String operationName, Set<String> urls) {
         Object[] parameters = new Object[urls.size() + 1];
         parameters[0] = operationName;
@@ -340,10 +420,19 @@ class FullApiAuthorizationIntegrationTest {
         return parameters;
     }
 
+    /**
+     * 生成 N 个逗号分隔的 ? 占位符，供 IN (...) 之类的 SQL 拼接使用。
+     */
     private String placeholders(int size) {
         return String.join(",", java.util.Collections.nCopies(size, "?"));
     }
 
+    /**
+     * 简易 SQL 文件执行器：按 ; 分批执行 SQL 语句，自动跳过空行和以 -- 开头的注释行，
+     * 用于在测试启动时加载 v2 种子脚本。
+     *
+     * @param path SQL 文件路径
+     */
     private void executeSqlFile(Path path) throws Exception {
         StringBuilder statement = new StringBuilder();
         for (String rawLine : Files.readAllLines(path, StandardCharsets.UTF_8)) {

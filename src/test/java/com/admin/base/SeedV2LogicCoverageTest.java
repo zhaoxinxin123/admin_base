@@ -68,6 +68,10 @@ class SeedV2LogicCoverageTest {
     @Autowired
     private GlobalConfigRepository globalConfigRepository;
 
+    /**
+     * 在每个测试方法执行前初始化 v2 种子数据 fixture，包括管理员、角色、权限、角色权限关联以及全局配置。
+     * 目的是保证测试在一个干净且可重复的数据库状态下运行。
+     */
     @BeforeEach
     void installSeedV2Fixture() {
         seedAdmin();
@@ -78,6 +82,10 @@ class SeedV2LogicCoverageTest {
         seedGlobalConfig();
     }
 
+    /**
+     * 测试 v2 种子脚本中的核心数据是否正确入库：管理员账号、ROLE_ADMIN 角色、26 个种子权限
+     * 全部存在并且 ROLE_ADMIN 拥有全部种子权限 ID，同时验证全局配置中下载/上传路径和系统版本号的值。
+     */
     @Test
     void seedV2CoreDataExistsAndRoleAdminOwnsAllSeedPermissions() {
         var admin = adminRepository.findByUserName("admin").orElseThrow();
@@ -116,6 +124,10 @@ class SeedV2LogicCoverageTest {
                 .isEqualTo("2.0.0");
     }
 
+    /**
+     * 测试通过种子数据中声明的权限（sys:adminList/sys:permissionList/sys:configList）能否驱动
+     * MockMvc 成功访问角色列表、权限列表和全局配置列表端点，并验证响应 JSON 的关键字段符合预期。
+     */
     @Test
     @WithMockUser(username = "admin", authorities = {
             "sys:adminList",
@@ -154,6 +166,10 @@ class SeedV2LogicCoverageTest {
                 .andExpect(jsonPath("$.data.rows[0].configValue").value("2.0.0"));
     }
 
+    /**
+     * 向 tb_sys_admin 表插入或更新默认管理员账号（user_name=admin, admin_id=1, state=0）。
+     * 该方法是安装种子数据的基础步骤。
+     */
     private void seedAdmin() {
         jdbcTemplate.update("""
                 INSERT INTO tb_sys_admin (admin_id, nickname, user_name, password, state, create_time, update_time)
@@ -167,6 +183,9 @@ class SeedV2LogicCoverageTest {
                 """, "管理员", "admin", "$2a$10$KCq.c/d5K6ZuWDlKxOtokON5Vr3zssxrW1IMDaQpnF9oge1f9qwUi");
     }
 
+    /**
+     * 向 tb_sys_role 表插入或更新 ROLE_ADMIN 角色（role_id=1），作为权限分配的载体。
+     */
     private void seedRole() {
         jdbcTemplate.update("""
                 INSERT INTO tb_sys_role (role_id, role_name, note, create_time, update_time)
@@ -178,6 +197,10 @@ class SeedV2LogicCoverageTest {
                 """, "ROLE_ADMIN", "管理员");
     }
 
+    /**
+     * 批量插入 26 条 v2 种子权限数据，覆盖菜单级（sys:adminList 等）和按钮级（sys:admin:add 等）
+     * 两类权限，构成完整的权限树结构。
+     */
     private void seedPermissions() {
         permission(1, 0, 1, "/system", "sys:manage", "system", "系统管理");
         permission(2, 1, 2, "/system/admin", "sys:adminList", "admin", "管理员列表");
@@ -207,6 +230,18 @@ class SeedV2LogicCoverageTest {
         permission(26, 6, 3, "", "sys:log:delete", "", "日志删除");
     }
 
+    /**
+     * 单条权限插入/更新辅助方法，向 tb_sys_permissions 表写入一条权限记录
+     * （包含 id、父级 id、层级、路径、权限标识、URL、标题等字段）。
+     *
+     * @param id        权限主键
+     * @param parentId  父级权限 id
+     * @param level     权限层级（1=模块，2=菜单，3=按钮）
+     * @param path      前端路由路径
+     * @param perm      权限标识字符串
+     * @param url       后端匹配 url
+     * @param title     权限显示名
+     */
     private void permission(long id, long parentId, int level, String path, String perm, String url, String title) {
         jdbcTemplate.update("""
                 INSERT INTO tb_sys_permissions (permission_id, parent_id, level, path, perm, require_auth, state, url, title, create_time, update_time)
@@ -224,6 +259,10 @@ class SeedV2LogicCoverageTest {
                 """, id, parentId, level, path, perm, url, title);
     }
 
+    /**
+     * 向 tb_sys_admin_role 表插入管理员与角色的关联记录（admin_id=1, role_id=1），
+     * 把 admin 用户绑定到 ROLE_ADMIN 角色。
+     */
     private void seedAdminRole() {
         jdbcTemplate.update("""
                 INSERT INTO tb_sys_admin_role (admin_id, role_id, create_time)
@@ -232,6 +271,10 @@ class SeedV2LogicCoverageTest {
                 """);
     }
 
+    /**
+     * 遍历 SEED_PERMISSION_IDS，为 ROLE_ADMIN（role_id=1）逐一插入
+     * tb_sys_role_permission 关联记录，使该角色拥有全部 26 个种子权限。
+     */
     private void seedRolePermissions() {
         for (Long permissionId : SEED_PERMISSION_IDS) {
             jdbcTemplate.update("""
@@ -242,12 +285,23 @@ class SeedV2LogicCoverageTest {
         }
     }
 
+    /**
+     * 插入 v2 种子脚本中的三条全局配置：文件下载路径、文件上传路径、系统版本号，
+     * 用于测试全局配置相关接口的查询。
+     */
     private void seedGlobalConfig() {
         globalConfig("global_download_path", "/tmp/admin-base/download", "文件下载路径");
         globalConfig("global_upload_path", "/tmp/admin-base/upload", "文件上传路径");
         globalConfig("sys_version", "2.0.0", "系统版本号");
     }
 
+    /**
+     * 单条全局配置插入/更新辅助方法，向 tb_sys_global_config 表写入一条配置项。
+     *
+     * @param key   配置键
+     * @param value 配置值
+     * @param note  配置说明
+     */
     private void globalConfig(String key, String value, String note) {
         jdbcTemplate.update("""
                 INSERT INTO tb_sys_global_config (config_key, config_value, note, create_time, update_time)

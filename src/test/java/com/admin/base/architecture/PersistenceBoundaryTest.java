@@ -18,7 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PersistenceBoundaryTest {
 
     /**
-     * Controller 和 service 接口是业务边界，不应暴露 MyBatis Plus 的分页或 IService 类型。
+     * 测试 Controller 与 service 接口层不再依赖 MyBatis Plus：扫描 /controller/ 和
+     * service/system 下的 IxxxService 接口源文件，断言不出现 com.baomidou.mybatisplus、
+     * IPage<> 或 IService<> 引用，防止旧持久层类型泄漏到业务边界。
      */
     @Test
     void mybatisPlusDoesNotAppearInControllersOrServiceInterfaces() throws IOException {
@@ -37,7 +39,9 @@ class PersistenceBoundaryTest {
     }
 
     /**
-     * 主源码应完全移除 MyBatis/MyBatis Plus 依赖，持久层统一由 Spring Data JPA 承担。
+     * 测试主源码（src/main/java/com/admin/base）整体已不再依赖 MyBatis/MyBatis Plus：
+     * 断言主目录所有 .java 文件中不出现 com.baomidou.mybatisplus 或 org.mybatis 引用，
+     * 保证持久层统一由 Spring Data JPA 承担。
      */
     @Test
     void mybatisPlusIsRemovedFromMainSources() throws IOException {
@@ -52,6 +56,9 @@ class PersistenceBoundaryTest {
         }
     }
 
+    /**
+     * 读取一个 Java 源文件的全部内容为字符串，IO 异常包装为 IllegalStateException 抛出。
+     */
     private String read(Path path) {
         try {
             return Files.readString(path);
