@@ -70,7 +70,7 @@ public class RolePermissionController extends BaseController {
             final List<Long> list = iRolePermissionService.selectPermissionIdByRoleId(record.getRoleId());
             assert permissionResponses != null;
             List<PermissionResponse> rootMenus = permissionResponses.stream()
-                    .filter(item -> item.getLevel().equals(0))
+                    .filter(item -> item.getParentId() != null && item.getParentId().equals(0L))
                     .collect(Collectors.toList());
             rootMenus.forEach(rootMenu ->
                     rootMenu.setChild(MenuUtils.getChild(permissionResponses, rootMenu.getPermissionId(), rootMenu)));

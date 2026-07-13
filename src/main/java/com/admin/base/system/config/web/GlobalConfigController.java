@@ -45,7 +45,7 @@ public class GlobalConfigController extends BaseController {
     }
 
     @Log(title = "sys", businessType = BusinessType.INSERT, isSaveRequestData = false)
-    @PreAuthorize("hasAuthority('sys:setting:add')")
+    @PreAuthorize("hasAuthority('sys:config:add')")
     @PostMapping("/add")
     public JsonResponse add(@Validated AddGlobalConfigParam addGlobalConfigParam) {
         iGlobalConfigService.add(addGlobalConfigParam);
@@ -54,7 +54,7 @@ public class GlobalConfigController extends BaseController {
 
 
     @Log(title = "sys", businessType = BusinessType.DELETE, isSaveRequestData = false)
-    @PreAuthorize("hasAuthority('sys:setting:delete')")
+    @PreAuthorize("hasAuthority('sys:config:delete')")
     @PostMapping("/deleteBatch")
     public JsonResponse deleteBatch(@Validated DeleteGlobalConfigParam deleteGlobalConfigParam) {
         iGlobalConfigService.deleteByIds(deleteGlobalConfigParam.getConfigIds());
@@ -62,7 +62,7 @@ public class GlobalConfigController extends BaseController {
     }
 
     @Log(title = "sys", businessType = BusinessType.UPDATE, isSaveRequestData = false)
-    @PreAuthorize("hasAuthority('sys:setting:update')")
+    @PreAuthorize("hasAuthority('sys:config:edit')")
     @PostMapping("/update")
     public JsonResponse deleteBatch(@Validated UpdateGlobalConfigParam updateGlobalConfigParam) {
         iGlobalConfigService.updateConfig(updateGlobalConfigParam);

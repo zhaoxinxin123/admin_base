@@ -10,6 +10,7 @@ import com.admin.base.shared.constant.log.BusinessType;
 import com.admin.base.infrastructure.web.BaseController;
 import com.admin.base.system.log.domain.OperationLog;
 import com.admin.base.system.log.application.IOperationLogService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,6 +34,7 @@ public class OperationLogController extends BaseController {
     @Resource
     private IOperationLogService iOperationLogService;
     @PostMapping("/list")
+    @PreAuthorize("hasAuthority('sys:logList')")
     public JsonResponse list(@Validated OperationLogListParam operationListParam) {
         PageResult<OperationLog> pageResult = iOperationLogService.listPage(operationListParam);
         final Map<String, Object> dataTable = getDataTable(pageResult, 6);
@@ -40,6 +42,7 @@ public class OperationLogController extends BaseController {
     }
 
     @PostMapping("/deleteBatch")
+    @PreAuthorize("hasAuthority('sys:log:delete')")
     @Log(title = "sys",businessType = BusinessType.DELETE)
     public JsonResponse deleteByIds(DeleteOperationLogParam deleteOperationLogParam){
         iOperationLogService.deleteByIds(deleteOperationLogParam.getLogIds());
@@ -48,4 +51,3 @@ public class OperationLogController extends BaseController {
 
 
 }
-

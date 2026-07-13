@@ -36,6 +36,7 @@ public class RoleController extends BaseController {
      * @return 角色列表
      */
     @PostMapping("/all")
+    @PreAuthorize("hasAuthority('sys:roleList')")
     public JsonResponse getAllRole() {
         return JsonResponse.success(iRoleService.getRoleList());
     }
@@ -49,7 +50,7 @@ public class RoleController extends BaseController {
      */
     @PostMapping("/add")
     @Log(title = "sys", businessType = BusinessType.INSERT)
-    @PreAuthorize("hasAuthority('sys:roleList:operation')")
+    @PreAuthorize("hasAuthority('sys:role:add')")
     public JsonResponse addRole(@Validated AddRoleParam addRoleParam) {
         checkRoleName(addRoleParam.getRoleName());
         iRoleService.addRole(addRoleParam.getNote(), addRoleParam.getRoleName(), addRoleParam.getPermissionIds());
@@ -64,7 +65,7 @@ public class RoleController extends BaseController {
      * @return 响应
      */
     @PostMapping("/delete")
-    @PreAuthorize("hasAuthority('sys:roleList:delete')")
+    @PreAuthorize("hasAuthority('sys:role:delete')")
     @Log(title = "sys", businessType = BusinessType.DELETE)
     public JsonResponse deleteRole(@Validated DeleteRoleParam deleteRoleParam) {
         iRoleService.deleteRole(deleteRoleParam.getRoleId());
@@ -78,7 +79,7 @@ public class RoleController extends BaseController {
      * @return 响应
      */
     @PostMapping("/update")
-    @PreAuthorize("hasAuthority('sys:roleList:operation')")
+    @PreAuthorize("hasAuthority('sys:role:edit')")
     @Log(title = "sys", businessType = BusinessType.UPDATE)
     public JsonResponse updateRole(@Validated UpdateRoleParam updateRoleParam) {
         iRoleService.updateRole(updateRoleParam.getRoleId(), updateRoleParam.getRoleName(), updateRoleParam.getNote(), updateRoleParam.getPermissionIds());
@@ -102,4 +103,3 @@ public class RoleController extends BaseController {
         }
     }
 }
-

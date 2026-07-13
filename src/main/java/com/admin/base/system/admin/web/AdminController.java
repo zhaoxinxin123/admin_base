@@ -49,7 +49,7 @@ public class AdminController extends BaseController {
 
 
     @PostMapping("/add")
-    @PreAuthorize("hasAuthority('sys:adminList:add')")
+    @PreAuthorize("hasAuthority('sys:admin:add')")
     @Log(title = "sys", businessType = BusinessType.INSERT)
     public JsonResponse addAdmin(@Validated AddAdminParam addAdminParam) {
         iAdminService.addAdmin(addAdminParam.getAccount(), addAdminParam.getPassword(), addAdminParam.getNickName(), addAdminParam.getRoleIds());
@@ -58,7 +58,7 @@ public class AdminController extends BaseController {
 
 
     @PostMapping("/delete")
-    @PreAuthorize("hasAuthority('sys:adminList:delete')")
+    @PreAuthorize("hasAuthority('sys:admin:delete')")
     @Log(title = "sys", businessType = BusinessType.INSERT)
     public JsonResponse deleteAdmin(@Validated AdminIdParam adminIdParam) {
         iAdminService.deleteAdmin(adminIdParam.getAdminId());
@@ -67,6 +67,7 @@ public class AdminController extends BaseController {
 
 
     @PostMapping("/getMenu")
+    @PreAuthorize("isAuthenticated()")
     public JsonResponse getMenu() throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         final String userName = getUserName();
         List<Permissions> all;
@@ -77,7 +78,7 @@ public class AdminController extends BaseController {
         final List<PermissionResponse> permissionResponses = ListEntityConvert.listCopyToAnotherList(PermissionResponse.class, all);
         assert permissionResponses != null;
         final List<PermissionResponse> rootMenus = permissionResponses.stream()
-                .filter(item -> item.getLevel().equals(0))
+                .filter(item -> item.getParentId() != null && item.getParentId().equals(0L))
                 .collect(Collectors.toList());
         rootMenus.forEach(rootMenu ->
                 rootMenu.setChild(MenuUtils.getChild(permissionResponses, rootMenu.getPermissionId(), rootMenu)));
@@ -86,4 +87,3 @@ public class AdminController extends BaseController {
 
 
 }
-

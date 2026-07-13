@@ -1,4 +1,4 @@
-package com.admin.base.infrastructure.bootstrap;
+package com.admin.base.shared.factory;
 
 import com.admin.base.shared.constant.AdminStatus;
 import com.admin.base.shared.constant.YesOrNo;
@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
  * @date 2021/9/5 12:13 下午
  * @desc
  */
-public class EntityInit {
+public class EntityFactory {
     public static Admin initAdmin(String username, String password, String passwordShow, String nickName) {
         Admin admin = new Admin();
 //        admin.setPasswordShow(passwordShow);

@@ -1,6 +1,6 @@
 package com.admin.base.system.permission.application.impl;
 
-import com.admin.base.infrastructure.bootstrap.EntityInit;
+import com.admin.base.shared.factory.EntityFactory;
 import com.admin.base.shared.constant.ResponseCode;
 import com.admin.base.shared.constant.YesOrNo;
 import com.admin.base.system.permission.dto.AddPermissionParam;
@@ -48,7 +48,7 @@ public class PermissionsServiceImpl implements IPermissionsService {
     @Transactional(rollbackFor = Exception.class)
     public void add(AddPermissionParam addPermissionParam) {
         int level = checkLevel(addPermissionParam.getParentId());
-        Permissions permissions = EntityInit.initPermission(addPermissionParam);
+        Permissions permissions = EntityFactory.initPermission(addPermissionParam);
         permissions.setLevel(level);
         Permissions saved = permissionsRepository.save(permissions);
         iRolePermissionService.insertRolePermission(1, Collections.singletonList(saved.getPermissionId().intValue()));

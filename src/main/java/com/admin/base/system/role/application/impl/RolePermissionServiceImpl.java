@@ -1,6 +1,6 @@
 package com.admin.base.system.role.application.impl;
 
-import com.admin.base.infrastructure.bootstrap.EntityInit;
+import com.admin.base.shared.factory.EntityFactory;
 import com.admin.base.shared.constant.ResponseCode;
 import com.admin.base.shared.constant.YesOrNo;
 import com.admin.base.system.permission.domain.Permissions;
@@ -91,7 +91,7 @@ public class RolePermissionServiceImpl implements IRolePermissionService {
 
     private void saveRolePermissions(Integer roleId, Collection<Long> permissionIds) {
         for (Long permissionId : permissionIds) {
-            RolePermission rolePermission = EntityInit.initRolePermission(roleId, permissionId.intValue());
+            RolePermission rolePermission = EntityFactory.initRolePermission(roleId, permissionId.intValue());
             rolePermissionRepository.save(rolePermission);
         }
     }

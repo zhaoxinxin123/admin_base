@@ -77,7 +77,7 @@ public class AdminRoleController extends BaseController {
 
 
     @PostMapping("/resetPassword")
-    @PreAuthorize("hasAuthority('sys:adminList:resetPassword')")
+    @PreAuthorize("hasAuthority('sys:admin:resetPwd')")
     @Log(title = "sys", businessType = BusinessType.UPDATE)
     public JsonResponse updatePassword(@Validated UpdateAdminPasswordParam updateAdminPasswordParam) {
         //更新管理员密码
@@ -87,7 +87,7 @@ public class AdminRoleController extends BaseController {
 
 
     @PostMapping("/updateState")
-    @PreAuthorize("hasAuthority('sys:adminList:diable')")
+    @PreAuthorize("hasAuthority('sys:admin:edit')")
     @Log(title = "sys", businessType = BusinessType.UPDATE)
     public JsonResponse updateAdminState(@Validated UpdateAdminStateParam updateAdminStateParam) {
         if (AdminStatus.COMMON != updateAdminStateParam.getState() && AdminStatus.DISABLE != updateAdminStateParam.getState()) {
@@ -100,7 +100,7 @@ public class AdminRoleController extends BaseController {
 
 
     @PostMapping("/updateAdminOfRole")
-    @PreAuthorize("hasAuthority('sys:adminList:updateRole')")
+    @PreAuthorize("hasAuthority('sys:admin:edit')")
     @Log(title = "sys", businessType = BusinessType.UPDATE)
     public JsonResponse updateAdminOfRole(@Validated UpdateAdminOfRoleParam updateAdminOfRoleParam) {
         iAdminRoleService.updateAdminOfRole(updateAdminOfRoleParam.getAdminId(), updateAdminOfRoleParam.getRoleIds());
@@ -110,4 +110,3 @@ public class AdminRoleController extends BaseController {
 
 
 }
-
