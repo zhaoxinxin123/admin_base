@@ -1,13 +1,6 @@
 # admin_base
 
-`admin_base` 是一个基于 Java 17、Spring Boot 3.5、Spring Data JPA、Spring Security、MySQL 和 Redis 的后台管理基础项目。当前代码已经完成现代化 Phase 1-3：基础治理、JPA 持久化、v2 数据库脚本、JWT/OAuth2 双认证模式，以及按业务域重组后的模块化包结构。
-
-这份 README 面向三类场景：
-
-- 快速启动项目并导入基础数据。
-- 用接口工具完成登录、鉴权和系统模块接口测试。
-- 按现有架构新增业务模块，而不是复制旧式 Controller/Mapper 模板。
-
+`admin_base` 是一个基于 Java 17、Spring Boot 3.5、Spring Data JPA、Spring Security、MySQL 和 Redis 的后台管理基础项目。
 ## 技术栈
 
 - Java 17
@@ -426,9 +419,6 @@ mvn test -Dtest=AuthModePropertiesTest,AuthModeSecurityConfigTest,OAuth2Authorit
 # 数据库脚本和 seed
 mvn test -Dtest=SchemaDraftTest,SchemaSeedConsistencyTest,SeedV2LogicCoverageTest
 ```
-
-测试失败时优先看第一条失败断言和堆栈，判断是 fixture、schema、auth、Service 逻辑还是环境问题。不要通过放松断言来掩盖真实问题。
-
 ## 代码约定
 
 - 新代码使用 Spring Data JPA repository，不新增 MyBatis Mapper/XML。
@@ -438,18 +428,3 @@ mvn test -Dtest=SchemaDraftTest,SchemaSeedConsistencyTest,SeedV2LogicCoverageTes
 - 不记录密码、JWT、验证码答案、OAuth2 token 等敏感值。
 - 改动保持聚焦，避免把按钮权限整体迁移等大任务混入无关需求。
 - 生产默认值保持安全；测试和开发默认值必须在文档中说明。
-
-## 现代化文档
-
-- [第一阶段：基础治理](docs/modernization/admin-base-phase-1-readable-plan.md)
-- [第二阶段：JPA 与数据库迁移](docs/modernization/admin-base-phase-2-readable-plan.md)
-- [第三阶段：OAuth2/OIDC 接入](docs/modernization/admin-base-phase-3-readable-plan.md)
-- [Phase 3 验证记录](docs/modernization/phase-3-verification.md)
-- [OAuth2 Provider Setup](docs/modernization/oauth2-provider-setup.md)
-
-详细计划和设计文档：
-
-```text
-docs/superpowers/plans/
-docs/superpowers/specs/2026-07-08-admin-base-modernization-design.md
-```
