@@ -4,14 +4,7 @@ This file gives coding agents the project-specific rules for future development 
 
 ## Project State
 
-`admin_base` is a Java 17 / Spring Boot 3.5 backend admin template. It has already completed the modernization work through Phase 3:
-
-- Phase 1: baseline cleanup, dependency modernization, security/test hardening.
-- Phase 2: Spring Data JPA persistence path and v2 MySQL schema/seed scripts.
-- Phase 3: JWT/OAuth2 auth mode split and OAuth2 Resource Server support.
-
-Do not describe JPA or OAuth2 as future work. They are part of the current branch.
-
+`admin_base` is a Java 17 / Spring Boot 3.5 backend admin template.
 ## Build & Run
 
 ```bash
@@ -27,18 +20,30 @@ mvn test -Dtest=SeedV2LogicCoverageTest
 # Run selected classes
 mvn test -Dtest=OAuth2AuthorityMapperTest,OAuth2AudienceValidatorTest
 
+# Run schema/seed checks
+mvn test -Dtest=SchemaDraftTest,SchemaSeedConsistencyTest,SeedV2LogicCoverageTest
+
 # Run app, default profile is test
 mvn spring-boot:run
 
 # Run with explicit profile
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
-
 Default service settings:
 
 - Port: `9999`
 - Context path: `/admin-api`
 - Default profile: `test`
+- Default auth mode: `jwt`
+
+Database scripts:
+
+```text
+docs/database/admin-base-schema-v2.sql
+docs/database/admin-base-seed-v2.sql
+```
+
+For a fresh local database, import schema first and seed second. No migration script is currently tracked on `main`; if a task restores one, update `SchemaSeedConsistencyTest`, README and this file together. README has the user-facing import commands; keep it updated when these scripts change.
 
 ## Test Environment Rules
 
@@ -56,27 +61,38 @@ Default service settings:
 
 ```text
 com.admin.base
-├── annotation/       # Custom annotations: @Log, @RequestLogs, @RepeatInvoke
-├── asp/              # AOP aspects: logging, request logging, repeat-invoke guard
-├── common/           # JsonResponse, PageResult and shared response types
-├── component/        # RedisLock, EntityInit, ResponseInit
-├── config/           # Spring, security, Redis, Druid, JPA and app properties
-│   ├── common/       # Common configuration properties
-│   └── security/     # SecurityConfig, JWT mode, OAuth2 mode, current user abstraction
-├── constant/         # ResponseCode, AdminStatus, CacheTimeType, log enums
-├── controller/       # REST controllers
-│   ├── common/       # BaseController
-│   └── system/       # Admin/role/permission/config/log endpoints
-├── dto/              # request/ and response/ DTOs, separated by domain
-├── entity/           # JPA entities
-│   └── system/       # System admin domain entities
-├── exception/        # GlobalException, BusinessException
-├── filter/           # MyTokenFilter, XssHttpServletRequestWrapper
-├── manager/          # AsyncManager, ShutdownManager, AsyncFactory
-├── repository/       # Spring Data JPA repositories
-├── service/          # Service interfaces + impl/ subdirectories
-└── utils/            # JWT, file, captcha, HTML, UUID and misc helpers
+├── auth/                         # Login, captcha, auth DTOs and open endpoints
+│   ├── dto/
+│   └── web/
+├── infrastructure/               # Cross-cutting infrastructure
+│   ├── aop/                      # @Log, @RequestLogs, @RepeatInvoke and aspects
+│   ├── async/                    # Async task management
+│   ├── bootstrap/                # Startup initialization
+│   ├── cache/                    # Redis cache and locks
+│   ├── config/                   # Spring, Security, JPA, Redis, Druid config
+│   ├── security/                 # JWT/OAuth2, current user abstraction, authority mapping
+│   └── web/                      # Common upload/download endpoints, BaseController, filters
+├── shared/                       # Shared API types, constants, exceptions, domain bases, utilities
+│   ├── api/
+│   ├── constant/
+│   ├── domain/
+│   ├── exception/
+│   └── util/
+├── system/                       # System management bounded contexts
+│   ├── admin/
+│   ├── config/
+│   ├── log/
+│   ├── permission/
+│   └── role/
+│       ├── application/          # Service interfaces and implementations
+│       ├── domain/               # JPA entities
+│       ├── dto/                  # Request/response DTOs
+│       ├── persistence/          # Spring Data JPA repositories
+│       └── web/                  # REST controllers
+└── user/                         # Spring Security user loading and user DTOs
 ```
+
+Business code should follow the dependency direction `web -> application -> persistence/domain`. Keep controllers thin, put business rules in application services, and keep database access inside persistence repositories.
 
 ## Auth Modes
 
@@ -104,7 +120,8 @@ OAuth2 setup notes are in `docs/modernization/oauth2-provider-setup.md`.
 
 - Use Spring Data JPA repositories for new code.
 - Do not add new MyBatis Mapper/XML code.
-- Entity classes should explicitly declare `@Table`, `@Column`, lengths, nullability and index/unique constraints that match SQL.
+- Entity classes live under `system/<module>/domain/` for system modules and should explicitly declare `@Table`, `@Column`, lengths, nullability and index/unique constraints that match SQL.
+- Repositories live under `system/<module>/persistence/` for system modules.
 - Use `AuditableEntity` for tables with `create_time` and `update_time`.
 - Schema is managed by SQL under `docs/database/`; Hibernate runs with `ddl-auto=validate`.
 - Do not add database foreign keys. Use unique indexes, normal indexes, service-level checks and tests.
@@ -114,9 +131,10 @@ Key database files:
 
 ```text
 docs/database/admin-base-schema-v2.sql
-docs/database/admin-base-schema-v2-migration.sql
 docs/database/admin-base-seed-v2.sql
 ```
+
+If a database migration script is added back under `docs/database/`, make sure tests reference the exact tracked filename and document the import order.
 
 ## API Rules
 
@@ -126,6 +144,7 @@ docs/database/admin-base-seed-v2.sql
 - Business failures should throw `BusinessException` with a `ResponseCode`.
 - Keep Controller methods thin: validate request DTO, call Service, return response.
 - For pagination, use the existing `PageResult` and `BaseController#getDataTable(...)` shape unless changing the API is explicitly required.
+- Keep user-facing endpoint examples in README aligned with actual controller mappings, including existing underscore routes such as `/admin_role`, `/role_permission`, `/sys_global_config`, and `/sys_operation_log`.
 
 ## Permission Rules
 
@@ -148,26 +167,24 @@ Use this checklist for new domain modules:
    - Update seed data if the module has menu/button permissions.
 
 2. **Entity**
-   - Add entity under `entity/<domain>/`.
+   - Add entity under `system/<module>/domain/` for system modules.
    - Extend `AuditableEntity` when the table has `create_time`/`update_time`.
    - Keep entity fields aligned with v2 SQL.
 
 3. **Repository**
-   - Add `JpaRepository` under `repository/<domain>/`.
+   - Add `JpaRepository` under `system/<module>/persistence/`.
    - Prefer derived queries or explicit JPA queries over ad hoc SQL.
 
 4. **DTO**
-   - Add request DTOs under `dto/request/<domain>/`.
-   - Add response DTOs under `dto/response/<domain>/`.
+   - Add request and response DTOs under `system/<module>/dto/`.
    - Use Bean Validation annotations for input constraints.
 
 5. **Service**
-   - Add interface under `service/<domain>/`.
-   - Add implementation under `service/<domain>/impl/`.
+   - Add the service interface and implementation under `system/<module>/application/`.
    - Enforce uniqueness, ownership and state transitions in Service.
 
 6. **Controller**
-   - Add controller under `controller/<domain>/` or `controller/system/`.
+   - Add controller under `system/<module>/web/`.
    - Use `JsonResponse`, `@Validated`, and `@PreAuthorize`.
    - Use `CurrentUserProvider` or `BaseController#getUserName()` for current user logic.
 
@@ -189,7 +206,7 @@ Existing useful tests:
 - `SeedV2LogicCoverageTest`: v2 seed core logic and permission-driven endpoint flow.
 - `SecurityConfigTest`, `SecurityBoundaryTest`, `OpenEndpointTest`: JWT-mode security behavior.
 - `AuthModeSecurityConfigTest`, `OAuth2*Test`, `OAuth2ResourceServerTest`: auth mode and OAuth2 behavior.
-- `PersistenceBoundaryTest`, `RemovedFeatureBoundaryTest`: architecture boundaries.
+- `PackageStructureBoundaryTest`, `PersistenceBoundaryTest`, `RemovedFeatureBoundaryTest`: architecture boundaries.
 
 Common commands:
 
@@ -199,6 +216,12 @@ mvn test -Dtest=SeedV2LogicCoverageTest
 
 # OAuth2 focused suite
 mvn test -Dtest=OAuth2AuthorityMapperTest,OAuth2AudienceValidatorTest,OAuth2PropertiesTest,AuthModeSecurityConfigTest,OAuth2ResourceServerTest
+
+# Architecture boundaries
+mvn test -Dtest=PackageStructureBoundaryTest,PersistenceBoundaryTest,RemovedFeatureBoundaryTest
+
+# Schema and seed
+mvn test -Dtest=SchemaDraftTest,SchemaSeedConsistencyTest,SeedV2LogicCoverageTest
 
 # Full suite
 mvn test
@@ -230,21 +253,3 @@ When a test fails:
 git diff --check
 mvn test
 ```
-
-- If the user requires a review before testing, classify findings as:
-  - P0: blocks merge; severe bug/security/data loss/compile or test infrastructure failure.
-  - P1: must fix before acceptance; clear functional error/regression/missing critical test/requirement mismatch.
-  - P2: should fix, but not blocking.
-  - P3: future optimization.
-
-Only proceed to final validation when P0/P1 are resolved or explicitly accepted by the user.
-
-## Important Docs
-
-- `README.md`: project overview and module extension guide.
-- `docs/modernization/admin-base-phase-1-readable-plan.md`
-- `docs/modernization/admin-base-phase-2-readable-plan.md`
-- `docs/modernization/admin-base-phase-3-readable-plan.md`
-- `docs/modernization/oauth2-provider-setup.md`
-- `docs/modernization/phase-3-verification.md`
-- `docs/superpowers/specs/2026-07-08-admin-base-modernization-design.md`
