@@ -1,8 +1,8 @@
 package com.admin.base;
 
-import com.admin.base.common.JsonResponse;
-import com.admin.base.dto.request.system.ListAdminParam;
-import com.admin.base.dto.response.system.CaptchaResponse;
+import com.admin.base.shared.api.JsonResponse;
+import com.admin.base.system.admin.dto.ListAdminParam;
+import com.admin.base.auth.dto.CaptchaResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

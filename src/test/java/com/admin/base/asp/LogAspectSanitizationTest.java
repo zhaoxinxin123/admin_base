@@ -1,4 +1,4 @@
-package com.admin.base.asp;
+package com.admin.base.infrastructure.aop;
 
 import org.junit.jupiter.api.Test;
 

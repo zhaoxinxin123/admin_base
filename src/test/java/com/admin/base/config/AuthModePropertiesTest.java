@@ -1,6 +1,6 @@
-package com.admin.base.config;
+package com.admin.base.infrastructure.config;
 
-import com.admin.base.config.security.AuthModeProperties;
+import com.admin.base.infrastructure.security.AuthModeProperties;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;

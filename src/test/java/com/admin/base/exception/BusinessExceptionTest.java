@@ -1,6 +1,6 @@
-package com.admin.base.exception;
+package com.admin.base.shared.exception;
 
-import com.admin.base.constant.ResponseCode;
+import com.admin.base.shared.constant.ResponseCode;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
