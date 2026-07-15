@@ -3,6 +3,7 @@ package com.admin.base;
 import com.admin.base.shared.api.JsonResponse;
 import com.admin.base.system.admin.dto.ListAdminParam;
 import com.admin.base.auth.dto.CaptchaResponse;
+import com.admin.base.support.DevRemoteIntegrationTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -27,12 +27,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * 核心功能集成测试，使用 test profile 连接 192.168.3.3 的 MySQL/Redis。
+ * 核心功能集成测试，使用 dev profile 连接远程测试环境的 MySQL/Redis。
  */
 @SpringBootTest(classes = BaseApplication.class)
 @AutoConfigureMockMvc
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles("test")
+@DevRemoteIntegrationTest
 class BaseApplicationTests {
     private final ObjectMapper objectMapper = new ObjectMapper();
 

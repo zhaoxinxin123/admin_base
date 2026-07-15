@@ -12,11 +12,13 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 public class JwtAuthenticationConverterConfig {
 
     private final AuthorityMapper authorityMapper;
+    private final OAuth2Properties properties;
 
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(authorityMapper::map);
+        converter.setPrincipalClaimName(properties.usernameClaim());
         return converter;
     }
 }

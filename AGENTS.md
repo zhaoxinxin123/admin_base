@@ -47,10 +47,12 @@ For a fresh local database, import schema first and seed second. No migration sc
 
 ## Test Environment Rules
 
-- The `test` profile is wired to MySQL and Redis on `192.168.3.3`.
+- Integration tests currently use the `dev` profile and are wired by `DevRemoteIntegrationTest` to MySQL and Redis on `192.168.3.3`.
 - Do not start local MySQL or Redis for tests unless the user explicitly asks for that.
 - Do not silently change tests to use local services or Testcontainers when the task asks for the shared test environment.
+- `DevRemoteIntegrationTest` sets short MySQL/Redis timeouts so an unavailable remote test environment fails quickly instead of hanging.
 - If a test needs seed data, prefer a transaction-scoped fixture and rollback after the test.
+- `FullApiAuthorizationIntegrationTest` reseeds tables before each test and is guarded to run only against a database whose name ends in `_it`; the default is the disposable `admin_base_it` database.
 - Before claiming completion, run the relevant focused tests and then `mvn test`.
 
 ## Architecture
@@ -211,7 +213,20 @@ Existing useful tests:
 - `SeedV2LogicCoverageTest`: v2 seed core logic and permission-driven endpoint flow.
 - `SecurityConfigTest`, `SecurityBoundaryTest`, `OpenEndpointTest`: JWT-mode security behavior.
 - `AuthModeSecurityConfigTest`, `OAuth2*Test`, `OAuth2ResourceServerTest`: auth mode and OAuth2 behavior.
+- `FullApiAuthorizationIntegrationTest`: dev-profile white-box API coverage for admin, limited user, public endpoints, error paths, upload/download and operation logs.
 - `PackageStructureBoundaryTest`, `PersistenceBoundaryTest`, `RemovedFeatureBoundaryTest`: architecture boundaries.
+
+API documentation for Apifox import is tracked at:
+
+```text
+docs/api/admin-base-openapi.apifox.yaml
+```
+
+The standardized dev test process is tracked at:
+
+```text
+docs/testing/dev-test-process.md
+```
 
 Common commands:
 

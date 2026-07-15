@@ -38,6 +38,19 @@ class SchemaSeedConsistencyTest {
         assertThat(seed).doesNotContain("tb_records");
     }
 
+    @Test
+    void seedGrantsAdministratorAllFileAuthorities() throws Exception {
+        String seed = Files.readString(Path.of("docs/database/admin-base-seed-v2.sql"));
+
+        assertThat(seed)
+                .contains("sys:file:upload")
+                .contains("sys:file:download")
+                .contains("sys:file:delete")
+                .contains("(1, 28, NOW())")
+                .contains("(1, 29, NOW())")
+                .contains("(1, 30, NOW())");
+    }
+
     /**
      * 测试 docs/database 目录只保留 v2 schema 和 v2 seed 两个脚本，
      * 并确保旧的 migration 脚本（admin-base-schema-v2-migration.sql）不存在。

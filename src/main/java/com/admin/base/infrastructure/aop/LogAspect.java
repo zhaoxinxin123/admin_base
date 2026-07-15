@@ -1,17 +1,17 @@
 package com.admin.base.infrastructure.aop;
 
 import com.admin.base.infrastructure.aop.annotation.Log;
-import com.admin.base.infrastructure.security.UserDetailsImpl;
+import com.admin.base.infrastructure.security.CurrentUserProvider;
 import com.admin.base.shared.constant.ResponseCode;
 import com.admin.base.system.log.entity.OperationLog;
 import com.admin.base.infrastructure.async.AsyncManager;
 import com.admin.base.infrastructure.async.factory.AsyncFactory;
 import com.admin.base.shared.util.RequestUtils;
-import com.admin.base.shared.util.SecurityUtils;
 import com.admin.base.shared.util.ServletUtils;
 import com.admin.base.shared.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.Signature;
@@ -43,9 +43,11 @@ import java.util.Set;
 @Aspect
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class LogAspect {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final CurrentUserProvider currentUserProvider;
 
     private static final Set<String> SENSITIVE_KEYS = Set.of(
             "password",
@@ -103,9 +105,6 @@ public class LogAspect {
                 return;
             }
 
-            // 获取当前的用户
-            UserDetailsImpl loginUser = SecurityUtils.getLoginUser();
-
             // *========数据库日志=========*//
             OperationLog operationLog = new OperationLog();
             operationLog.setStatus(ResponseCode.CODE_OK);
@@ -121,9 +120,7 @@ public class LogAspect {
             }
 
             operationLog.setOperationUrl(ServletUtils.getRequest().getRequestURI());
-            if (loginUser != null) {
-                operationLog.setOperationName(loginUser.getUsername());
-            }
+            operationLog.setOperationName(currentUsername());
 
             if (e != null) {
                 operationLog.setStatus(ResponseCode.CODE_SYS_ERROR);
@@ -146,6 +143,10 @@ public class LogAspect {
             log.error("异常信息:{}", exp.getMessage());
             exp.printStackTrace();
         }
+    }
+
+    String currentUsername() {
+        return currentUserProvider.currentUser().username();
     }
 
     /**

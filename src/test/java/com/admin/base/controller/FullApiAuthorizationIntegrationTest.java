@@ -1,12 +1,15 @@
 package com.admin.base.controller;
 
 import com.admin.base.BaseApplication;
+import com.admin.base.support.DestructiveTestDatabaseGuard;
+import com.admin.base.support.DevRemoteIntegrationTest;
 import com.admin.base.shared.constant.DownloadType;
 import com.admin.base.shared.constant.ResponseCode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -14,8 +17,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -34,16 +35,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = BaseApplication.class)
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
-@TestPropertySource(properties = {
-        "sysconfig.upload-path=${java.io.tmpdir}/admin-base-test/upload",
-        "sysconfig.download-path=${java.io.tmpdir}/admin-base-test/download",
-        "sysconfig.local-store=${java.io.tmpdir}/admin-base-test/local"
-})
+@DevRemoteIntegrationTest
+@ResourceLock("admin-base-it-database")
 class FullApiAuthorizationIntegrationTest {
 
     private static final String SEED_PASSWORD_HASH = "$2a$10$KCq.c/d5K6ZuWDlKxOtokON5Vr3zssxrW1IMDaQpnF9oge1f9qwUi";
@@ -77,12 +76,16 @@ class FullApiAuthorizationIntegrationTest {
     @Value("${sysconfig.download-path}")
     private Path downloadPath;
 
+    @Value("${spring.datasource.url}")
+    private String jdbcUrl;
+
     /**
      * 在每个集成测试执行前重置数据库：清空 7 张系统表后重新执行 v2 种子脚本，
      * 并创建只读权限的 limited 用户，同时建立下载目录，保证后续 API 调用有干净的种子环境。
      */
     @BeforeEach
     void resetDatabase() throws Exception {
+        DestructiveTestDatabaseGuard.requireIsolatedDatabase(jdbcUrl);
         jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS=0");
         for (String table : List.of(
                 "tb_sys_operation_log",
@@ -136,7 +139,7 @@ class FullApiAuthorizationIntegrationTest {
         okJson(postForm("/admin_role/updateAdminOfRole", token, "adminId", adminId.toString(), "roleIds", "1"));
         okJson(postForm("/admin/delete", token, "adminId", adminId.toString()));
 
-        String roleName = "ROLE_" + uniqueDigits();
+        String roleName = "ROLE_" + uniqueDigits().substring(0, 5);
         okJson(postForm("/role/add", token, "roleName", roleName, "note", "temporary role", "permissionIds", "1"));
         Integer roleId = jdbcTemplate.queryForObject(
                 "select role_id from tb_sys_role where role_name = ?",
@@ -197,9 +200,8 @@ class FullApiAuthorizationIntegrationTest {
     }
 
     /**
-     * 测试只读权限的 limited 用户：可访问公开端点（验证码）、登录、所有已分配查询权限的 API
-     * 以及公共上传/下载接口，但所有变更型接口（admin/role/permission/config/log 的增删改）
-     * 都会被拦截并返回"没有权限访问"业务错误。
+     * 测试仅拥有 sys:adminList 的 limited 用户：可访问公开端点、登录、自己的菜单和管理员列表，
+     * 其他查询、文件及变更接口全部被拦截并返回"没有权限访问"业务错误。
      */
     @Test
     void limitedUserCanOnlyAccessPublicAuthenticatedAndGrantedPermissionApis() throws Exception {
@@ -212,12 +214,23 @@ class FullApiAuthorizationIntegrationTest {
         String token = login("limited", "123456");
         okJson(postJson("/admin_role/list", token, Map.of("page", 1, "size", 10)));
         okJson(postForm("/admin/getMenu", token));
-        okJson(postForm("/role/all", token));
-        okJson(postForm("/role_permission/manageList", token, "page", "1", "size", "10"));
-        okJson(postForm("/permissions/list", token));
-        okJson(postForm("/sys_global_config/list", token, "page", "1", "size", "10"));
-        okJson(postForm("/sys_operation_log/list", token, "page", "1", "size", "10"));
-        exerciseCommonEndpoints(token);
+
+        forbidden(postForm("/role/all", token));
+        forbidden(postForm("/role_permission/manageList", token, "page", "1", "size", "10"));
+        forbidden(postForm("/permissions/list", token));
+        forbidden(postForm("/sys_global_config/list", token, "page", "1", "size", "10"));
+        forbidden(postForm("/sys_operation_log/list", token, "page", "1", "size", "10"));
+        forbidden(multipart("/common/upload")
+                .file(new MockMultipartFile("file", "blocked.txt", MediaType.TEXT_PLAIN_VALUE, "blocked".getBytes(StandardCharsets.UTF_8)))
+                .header("Authorization", bearer(token)));
+        forbidden(get("/common/download")
+                .header("Authorization", bearer(token))
+                .param("fileName", "blocked.txt")
+                .param("type", String.valueOf(DownloadType.DOWNLOAD))
+                .param("delete", "false"));
+        forbidden(get("/common/download/resource2")
+                .header("Authorization", bearer(token))
+                .param("resource", "blocked.txt"));
 
         forbidden(postForm("/admin/add", token, "account", "blocked", "password", "Abc123", "nickName", "Blocked", "roleIds", "1"));
         forbidden(postForm("/admin/delete", token, "adminId", "1"));
@@ -236,9 +249,52 @@ class FullApiAuthorizationIntegrationTest {
         forbidden(postForm("/sys_operation_log/deleteBatch", token, "logIds", "1"));
     }
 
+    @Test
+    void apiErrorScenariosReturnExpectedBusinessErrors() throws Exception {
+        JsonNode captcha = objectMapper.readTree(okJson(get("/open/captchaImage")).andReturn().getResponse().getContentAsString());
+        businessError(post("/open/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                        "username", "admin",
+                        "password", "123456",
+                        "uuid", captcha.at("/data/uuid").asText(),
+                        "code", "bad-code"))), ResponseCode.CODE_ALERT);
+
+        captcha = objectMapper.readTree(okJson(get("/open/captchaImage")).andReturn().getResponse().getContentAsString());
+        businessError(post("/open/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                        "username", "admin",
+                        "password", "wrong-password",
+                        "uuid", captcha.at("/data/uuid").asText(),
+                        "code", captcha.at("/data/tmpVar").asText()))), ResponseCode.CODE_SYS_ERROR);
+
+        String token = login("admin", "123456");
+        businessError(postForm("/admin/add", token,
+                "account", "admin",
+                "password", "Abc123",
+                "nickName", "Duplicate Admin",
+                "roleIds", "1"), ResponseCode.CODE_SYS_ERROR);
+        businessError(postForm("/admin/delete", token, "adminId", "1"), ResponseCode.CODE_SYS_ERROR);
+        businessError(postForm("/role/add", token, "roleName", "BAD_ROLE", "note", "invalid role", "permissionIds", "1"), ResponseCode.CODE_ALERT);
+        businessError(postForm("/permissions/add", token,
+                "parentId", "99999",
+                "perm", "sys:error:" + uniqueDigits(),
+                "icon", "error",
+                "name", "error",
+                "state", "1",
+                "title", "Invalid Parent",
+                "path", "/invalid-parent"), ResponseCode.CODE_SYS_ERROR);
+        businessError(postForm("/sys_global_config/add", token,
+                "key", "sys_version",
+                "value", "duplicate",
+                "note", "duplicate key"), ResponseCode.CODE_ALERT);
+        businessError(multipart("/common/upload").header("Authorization", bearer(token)), ResponseCode.CODE_SYS_ERROR);
+    }
+
     /**
      * 在数据库中创建 limited 用户、ROLE_LIMIT 角色，并把 admin 与该角色绑定；
-     * 再为该角色分配 11 个只读相关的权限 id，用于模拟低权限用户的访问场景。
+     * 再仅分配管理员列表权限，用于验证每个接口只接受自己的精确权限。
      */
     private void createLimitedUser() {
         jdbcTemplate.update("""
@@ -250,9 +306,7 @@ class FullApiAuthorizationIntegrationTest {
                 values (2, 'ROLE_LIMIT', 'Query-only test role', now(), now())
                 """);
         jdbcTemplate.update("insert into tb_sys_admin_role (admin_id, role_id, create_time) values (2, 2, now())");
-        for (int permissionId : List.of(1, 2, 3, 4, 5, 6, 7, 12, 17, 21, 25)) {
-            jdbcTemplate.update("insert into tb_sys_role_permission (role_id, permission_id, create_time) values (2, ?, now())", permissionId);
-        }
+        jdbcTemplate.update("insert into tb_sys_role_permission (role_id, permission_id, create_time) values (2, 2, now())");
     }
 
     /**
@@ -279,8 +333,8 @@ class FullApiAuthorizationIntegrationTest {
     }
 
     /**
-     * 公共端点回归：使用 token 上传一个 txt 文件，再分别通过 /common/download
-     * 和 /common/download/resource2 两种下载方式访问同一资源，覆盖通用上传/下载流程。
+     * 文件端点回归：验证上传成功、两个下载接口返回正确字节和响应头，并验证 delete=true
+     * 确实会在响应完成后删除文件。
      *
      * @param token 当前登录用户的 JWT
      */
@@ -288,17 +342,34 @@ class FullApiAuthorizationIntegrationTest {
         MockMultipartFile file = new MockMultipartFile("file", "sample.txt", MediaType.TEXT_PLAIN_VALUE, "hello".getBytes(StandardCharsets.UTF_8));
         okJson(multipart("/common/upload").file(file).header("Authorization", bearer(token)));
 
-        Files.writeString(downloadPath.resolve("sample_hello.txt"), "hello", StandardCharsets.UTF_8);
+        Path downloadFile = downloadPath.resolve("sample_hello.txt");
+        Files.writeString(downloadFile, "hello", StandardCharsets.UTF_8);
         mockMvc.perform(get("/common/download")
                         .header("Authorization", bearer(token))
                         .param("fileName", "sample_hello.txt")
                         .param("type", String.valueOf(DownloadType.DOWNLOAD))
                         .param("delete", "false"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
+                .andExpect(content().bytes("hello".getBytes(StandardCharsets.UTF_8)))
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("attachment")));
         mockMvc.perform(get("/common/download/resource2")
                         .header("Authorization", bearer(token))
                         .param("resource", "sample_hello.txt"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
+                .andExpect(content().bytes("hello".getBytes(StandardCharsets.UTF_8)));
+
+        Path deleteAfterDownload = downloadPath.resolve("sample_delete.txt");
+        Files.writeString(deleteAfterDownload, "delete-me", StandardCharsets.UTF_8);
+        mockMvc.perform(get("/common/download")
+                        .header("Authorization", bearer(token))
+                        .param("fileName", "sample_delete.txt")
+                        .param("type", String.valueOf(DownloadType.DOWNLOAD))
+                        .param("delete", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes("delete-me".getBytes(StandardCharsets.UTF_8)));
+        assertThat(deleteAfterDownload).doesNotExist();
     }
 
     /**
@@ -324,6 +395,12 @@ class FullApiAuthorizationIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(ResponseCode.CODE_TOKEN_ERROR))
                 .andExpect(jsonPath("$.msg").value("没有权限访问"));
+    }
+
+    private void businessError(MockHttpServletRequestBuilder request, int code) throws Exception {
+        mockMvc.perform(request)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(code));
     }
 
     /**

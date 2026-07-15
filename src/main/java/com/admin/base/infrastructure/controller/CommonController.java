@@ -31,13 +31,13 @@ public class CommonController {
      *
      * @param fileName 文件名称
      * @param delete   是否删除
-     */
+    */
     @GetMapping("/download")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('sys:file:download') and (!#delete or hasAuthority('sys:file:delete'))")
     public void fileDownload(String fileName, Integer type, Boolean delete, HttpServletResponse response) {
         try {
             if (!FileUtils.checkAllowDownload(fileName)) {
-                throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "文件名称非法，不允许下下载");
+                throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "文件名称非法，不允许下载");
             }
             String realFileName = System.currentTimeMillis() + fileName.substring(fileName.indexOf("_") + 1);
             String filePath = getFilePath(fileName, type);
@@ -45,11 +45,14 @@ public class CommonController {
             response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
             FileUtils.setAttachmentResponseHeader(response, realFileName);
             FileUtils.writeBytes(filePath, response.getOutputStream());
-            if (delete) {
+            if (Boolean.TRUE.equals(delete)) {
                 FileUtils.deleteFile(filePath);
             }
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("下载文件失败", e);
+            throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "下载文件失败");
         }
     }
 
@@ -68,7 +71,7 @@ public class CommonController {
      */
     @PostMapping("/upload")
     @ResponseBody
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('sys:file:upload')")
     public JsonResponse uploadFile(MultipartFile file) {
         try {
             // 上传文件路径
@@ -86,13 +89,13 @@ public class CommonController {
 
     /**
      * 本地资源通用下载
-     */
+    */
     @GetMapping("/download/resource2")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAuthority('sys:file:download')")
     public void resourceDownloadTest(String resource, HttpServletResponse response) {
         try {
             if (!FileUtils.checkAllowDownload(resource)) {
-                throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "文件名称非法，不允许下下载");
+                throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "文件名称非法，不允许下载");
             }
             // 本地资源路径
             String localPath = SysConfig.getDownloadPath() + "/" + resource;
@@ -101,8 +104,11 @@ public class CommonController {
             response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
             FileUtils.setAttachmentResponseHeader(response, downloadName);
             FileUtils.writeBytes(localPath, response.getOutputStream());
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("下载文件失败", e);
+            throw new BusinessException(ResponseCode.CODE_SYS_ERROR, "下载文件失败");
         }
     }
 }

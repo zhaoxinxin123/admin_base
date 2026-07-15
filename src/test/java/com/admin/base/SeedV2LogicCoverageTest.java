@@ -6,6 +6,7 @@ import com.admin.base.system.config.repository.GlobalConfigRepository;
 import com.admin.base.system.permission.repository.PermissionsRepository;
 import com.admin.base.system.role.repository.RolePermissionRepository;
 import com.admin.base.system.role.repository.RoleRepository;
+import com.admin.base.support.DevRemoteIntegrationTest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +17,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,11 +32,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * 基于 docs/database/admin-base-seed-v2.sql 的逻辑覆盖测试。
  *
- * <p>测试使用 test profile 连接 192.168.3.3 的 MySQL/Redis，不启动本地依赖。</p>
+ * <p>测试使用 dev profile 连接远程测试环境的 MySQL/Redis，不启动本地依赖。</p>
  */
 @SpringBootTest(classes = BaseApplication.class)
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
+@DevRemoteIntegrationTest
 @Transactional
 class SeedV2LogicCoverageTest {
 

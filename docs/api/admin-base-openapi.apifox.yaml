@@ -1,0 +1,704 @@
+openapi: 3.0.3
+info:
+  title: admin_base API
+  version: 2.0.0
+  description: |
+    Apifox 可导入的 admin_base 接口文档。接口以 `/admin-api` 为 context path。
+    除 `/open/**` 外，其余接口需要 `Authorization: Bearer <token>`。
+servers:
+  - url: http://localhost:9999/admin-api
+    description: local/dev server
+security:
+  - bearerAuth: []
+tags:
+  - name: Open
+  - name: Admin
+  - name: Role
+  - name: Permission
+  - name: Config
+  - name: OperationLog
+  - name: Common
+paths:
+  /open/captchaImage:
+    get:
+      tags: [Open]
+      summary: 获取验证码
+      security: []
+      responses:
+        "200":
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptchaResponseEnvelope"
+  /open/login:
+    post:
+      tags: [Open]
+      summary: 登录并获取 JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            examples:
+              success:
+                value: {username: admin, password: "123456", code: abcd, uuid: captcha-uuid}
+              wrongCaptcha:
+                value: {username: admin, password: "123456", code: bad-code, uuid: captcha-uuid}
+      responses:
+        "200":
+          description: 成功或业务错误
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/LoginResponseEnvelope"
+                  - $ref: "#/components/schemas/ErrorEnvelope"
+              examples:
+                success:
+                  value: {code: 200, msg: 成功, data: {adminId: 1, account: admin, nickName: 管理员, token: jwt-token}}
+                wrongCaptcha:
+                  value: {code: 1001, msg: 验证码错误, data: null}
+                wrongPassword:
+                  value: {code: 500, msg: 用户名或密码错误, data: null}
+  /admin/add:
+    post:
+      tags: [Admin]
+      summary: 新增管理员
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/AddAdminForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /admin/delete:
+    post:
+      tags: [Admin]
+      summary: 删除管理员
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/AdminIdForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /admin/getMenu:
+    post:
+      tags: [Admin]
+      summary: 当前用户菜单
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /admin_role/list:
+    post:
+      tags: [Admin]
+      summary: 管理员列表
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/ListAdminJson"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /admin_role/resetPassword:
+    post:
+      tags: [Admin]
+      summary: 重置管理员密码
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/ResetPasswordForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /admin_role/updateState:
+    post:
+      tags: [Admin]
+      summary: 更新管理员状态
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateAdminStateForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /admin_role/updateAdminOfRole:
+    post:
+      tags: [Admin]
+      summary: 更新管理员角色
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateAdminRolesForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /role/all:
+    post:
+      tags: [Role]
+      summary: 全部角色
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /role/add:
+    post:
+      tags: [Role]
+      summary: 新增角色
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/AddRoleForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /role/delete:
+    post:
+      tags: [Role]
+      summary: 删除角色
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/RoleIdForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /role/update:
+    post:
+      tags: [Role]
+      summary: 更新角色
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateRoleForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /role_permission/manageList:
+    post:
+      tags: [Role]
+      summary: 角色权限树
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/PageForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /permissions/list:
+    post:
+      tags: [Permission]
+      summary: 权限树
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /permissions/add:
+    post:
+      tags: [Permission]
+      summary: 新增权限
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/AddPermissionForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /permissions/update:
+    post:
+      tags: [Permission]
+      summary: 更新权限
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/UpdatePermissionForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /permissions/delete:
+    post:
+      tags: [Permission]
+      summary: 删除权限
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/PermissionIdForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /sys_global_config/list:
+    post:
+      tags: [Config]
+      summary: 全局配置列表
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/ListConfigForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /sys_global_config/add:
+    post:
+      tags: [Config]
+      summary: 新增全局配置
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/AddConfigForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /sys_global_config/update:
+    post:
+      tags: [Config]
+      summary: 更新全局配置
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateConfigForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /sys_global_config/deleteBatch:
+    post:
+      tags: [Config]
+      summary: 批量删除全局配置
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/DeleteConfigForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /sys_operation_log/list:
+    post:
+      tags: [OperationLog]
+      summary: 操作日志列表
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/ListOperationLogForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /sys_operation_log/deleteBatch:
+    post:
+      tags: [OperationLog]
+      summary: 批量删除操作日志
+      security: [{bearerAuth: []}]
+      requestBody:
+        $ref: "#/components/requestBodies/DeleteOperationLogForm"
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /common/upload:
+    post:
+      tags: [Common]
+      summary: 上传文件
+      description: 需要权限 `sys:file:upload`。
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          $ref: "#/components/responses/JsonSuccessOrError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /common/download:
+    get:
+      tags: [Common]
+      summary: 通用下载
+      description: 需要 `sys:file:download`；当 `delete=true` 时还需要 `sys:file:delete`。
+      security: [{bearerAuth: []}]
+      parameters:
+        - {name: fileName, in: query, required: true, schema: {type: string}, example: sample_hello.txt}
+        - {name: type, in: query, required: true, schema: {type: integer}, example: 0}
+        - {name: delete, in: query, required: true, schema: {type: boolean}, example: false}
+      responses:
+        "200":
+          description: 文件流；非法文件名时当前实现记录日志并返回空响应
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /common/download/resource2:
+    get:
+      tags: [Common]
+      summary: 本地资源下载
+      description: 需要权限 `sys:file:download`。
+      security: [{bearerAuth: []}]
+      parameters:
+        - {name: resource, in: query, required: true, schema: {type: string}, example: sample_hello.txt}
+      responses:
+        "200":
+          description: 文件流；非法文件名时当前实现记录日志并返回空响应
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    JsonSuccessOrError:
+      description: 业务成功或业务错误。权限不足由全局异常处理返回 HTTP 200 + code=401。
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/JsonResponse"
+              - $ref: "#/components/schemas/ErrorEnvelope"
+          examples:
+            success:
+              value: {code: 200, msg: 成功, data: null}
+            forbidden:
+              value: {code: 401, msg: 没有权限访问, data: null}
+            validation:
+              value: {code: 500, msg: page 不能为空, data: null}
+    Unauthorized:
+      description: 未登录或 token 无效
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+          example:
+            code: 1003
+            msg: 请先登录
+            data: null
+  requestBodies:
+    ListAdminJson:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/PageRequest"
+              - type: object
+                properties:
+                  userName: {type: string}
+          example: {page: 1, size: 10, userName: admin}
+    AddAdminForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required: [account, password, nickName, roleIds]
+            properties:
+              account: {type: string}
+              password: {type: string, format: password}
+              nickName: {type: string}
+              roleIds: {type: array, items: {type: integer}}
+          example: {account: api_admin, password: Abc123, nickName: API Admin, roleIds: [1]}
+    AdminIdForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required: [adminId]
+            properties:
+              adminId: {type: integer}
+          example: {adminId: 2}
+    ResetPasswordForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required: [adminId, password]
+            properties:
+              adminId: {type: integer}
+              password: {type: string, format: password}
+          example: {adminId: 2, password: Def456}
+    UpdateAdminStateForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required: [adminId, state]
+            properties:
+              adminId: {type: integer}
+              state: {type: integer, enum: [0, 1]}
+          example: {adminId: 2, state: 0}
+    UpdateAdminRolesForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required: [adminId, roleIds]
+            properties:
+              adminId: {type: integer}
+              roleIds: {type: array, items: {type: integer}}
+          example: {adminId: 2, roleIds: [1]}
+    PageForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            $ref: "#/components/schemas/PageRequest"
+          example: {page: 1, size: 10}
+    AddRoleForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required: [roleName, permissionIds]
+            properties:
+              roleName: {type: string}
+              note: {type: string}
+              permissionIds: {type: array, items: {type: integer}}
+          example: {roleName: ROLE_TEST, note: test role, permissionIds: [1, 2]}
+    RoleIdForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required: [roleId]
+            properties:
+              roleId: {type: integer}
+          example: {roleId: 2}
+    UpdateRoleForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required: [roleId, roleName, permissionIds]
+            properties:
+              roleId: {type: integer}
+              roleName: {type: string}
+              note: {type: string}
+              permissionIds: {type: array, items: {type: integer}}
+          example: {roleId: 2, roleName: ROLE_TEST, note: updated, permissionIds: [1, 2]}
+    AddPermissionForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            $ref: "#/components/schemas/PermissionWrite"
+          example:
+            parentId: 1
+            perm: "sys:test:add"
+            icon: test
+            name: test
+            state: 1
+            title: Test
+            path: /system/test
+    UpdatePermissionForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            allOf:
+              - type: object
+                required: [permissionId]
+                properties:
+                  permissionId: {type: integer}
+              - $ref: "#/components/schemas/PermissionWrite"
+          example:
+            permissionId: 27
+            parentId: 1
+            perm: "sys:test:add"
+            icon: test
+            name: test
+            state: 1
+            title: Test
+            path: /system/test
+    PermissionIdForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required: [permissionId]
+            properties:
+              permissionId: {type: integer}
+          example: {permissionId: 27}
+    ListConfigForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/PageRequest"
+              - type: object
+                properties:
+                  key: {type: string}
+                  note: {type: string}
+          example: {page: 1, size: 10, key: sys, note: ""}
+    AddConfigForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            $ref: "#/components/schemas/ConfigWrite"
+          example: {key: api.test.key, value: "1", note: test config}
+    UpdateConfigForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            allOf:
+              - type: object
+                required: [configId]
+                properties:
+                  configId: {type: integer}
+              - $ref: "#/components/schemas/ConfigWrite"
+          example: {configId: 1, key: sys_version, value: 2.0.0, note: system version}
+    DeleteConfigForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required: [configIds]
+            properties:
+              configIds: {type: array, items: {type: integer}}
+          example: {configIds: [4]}
+    ListOperationLogForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            allOf:
+              - $ref: "#/components/schemas/PageRequest"
+              - type: object
+                properties:
+                  operationType: {type: integer}
+                  operationName: {type: string}
+                  modelName: {type: string}
+                  startTime: {type: string, example: "2026-07-15 00:00:00"}
+                  endTime: {type: string, example: "2026-07-15 23:59:59"}
+          example: {page: 1, size: 10}
+    DeleteOperationLogForm:
+      required: true
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            required: [logIds]
+            properties:
+              logIds: {type: array, items: {type: integer}}
+          example: {logIds: [1]}
+  schemas:
+    JsonResponse:
+      type: object
+      required: [code, msg]
+      properties:
+        code: {type: integer, example: 200}
+        msg: {type: string, example: 成功}
+        data: {}
+    ErrorEnvelope:
+      type: object
+      required: [code, msg]
+      properties:
+        code: {type: integer, example: 500}
+        msg: {type: string, example: 参数错误}
+        data: {nullable: true}
+    CaptchaResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/JsonResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                uuid: {type: string}
+                img: {type: string}
+                tmpVar: {type: string, description: dev/test 联调字段；生产调用方不应依赖}
+    LoginRequest:
+      type: object
+      required: [username, password, uuid]
+      properties:
+        username: {type: string}
+        password: {type: string, format: password}
+        code: {type: string}
+        uuid: {type: string}
+    LoginResponseEnvelope:
+      allOf:
+        - $ref: "#/components/schemas/JsonResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                adminId: {type: integer}
+                account: {type: string}
+                nickName: {type: string}
+                token: {type: string}
+    PageRequest:
+      type: object
+      required: [page, size]
+      properties:
+        page: {type: integer, minimum: 1}
+        size: {type: integer, minimum: 1}
+    PermissionWrite:
+      type: object
+      required: [parentId, perm, state, title, path]
+      properties:
+        parentId: {type: integer}
+        perm: {type: string}
+        icon: {type: string}
+        name: {type: string}
+        state: {type: integer, enum: [0, 1]}
+        title: {type: string}
+        path: {type: string}
+    ConfigWrite:
+      type: object
+      required: [key, value, note]
+      properties:
+        key: {type: string}
+        value: {type: string}
+        note: {type: string}

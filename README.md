@@ -81,7 +81,7 @@ src/main/java/com/admin/base
 - 默认 profile：`test`
 - 默认认证模式：`jwt`
 
-`test` profile 连接共享测试环境 `192.168.3.3` 上的 MySQL 和 Redis。开发本地环境建议使用 `dev` profile，并通过环境变量配置本机数据库和 Redis。
+当前集成测试采用 `dev` profile，并默认连接共享测试环境 `192.168.3.3` 上的 MySQL 和 Redis。破坏性全接口测试只允许使用一次性数据库 `admin_base_it`，保护器会拒绝任何非 `_it` 数据库。不要为了测试启动本地 MySQL 或 Redis；如环境地址变化，用 `DEV_*` 环境变量覆盖。
 
 ### 2. 创建数据库并导入数据
 
@@ -107,7 +107,7 @@ mysql -uroot -p admin_base < docs/database/admin-base-seed-v2.sql
 - 默认管理员：`admin`
 - 默认密码：`123456`
 - 默认角色：`ROLE_ADMIN`
-- 核心权限：系统管理、管理员、角色、权限、全局配置、操作日志
+- 核心权限：系统管理、管理员、角色、权限、全局配置、操作日志、文件上传/下载/删除
 - 全局配置：上传路径、下载路径、系统版本号
 
 脚本约定：
@@ -165,6 +165,8 @@ mvn spring-boot:run
 # 启动 dev profile
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
+
+规范测试流程见 [dev 环境测试流程](docs/testing/dev-test-process.md)。接口文档可直接导入 Apifox：`docs/api/admin-base-openapi.apifox.yaml`。
 
 启动后访问基础地址：
 
@@ -225,6 +227,13 @@ OAuth2 权限会经过 `OAuth2AuthorityMapper` 归一化后进入 Spring Securit
 ## 接口测试
 
 下面示例以本地 `dev` profile 和 JWT 模式为例。
+
+完整接口文档位于 [admin-base-openapi.apifox.yaml](docs/api/admin-base-openapi.apifox.yaml)，可通过 Apifox 的 OpenAPI/Swagger 导入功能导入。导入后配置环境变量：
+
+```text
+baseUrl = http://localhost:9999/admin-api
+token = 登录接口返回的 data.token
+```
 
 ### 1. 获取验证码
 
@@ -395,7 +404,7 @@ src/main/java/com/admin/base/system/notice
 - Service 纯逻辑使用 JUnit/Mockito。
 - Controller 和安全边界使用 MockMvc 与 `spring-security-test`。
 - schema/seed 变更运行 `SchemaDraftTest`、`SchemaSeedConsistencyTest` 和 `SeedV2LogicCoverageTest`。
-- 涉及共享测试环境时使用 `test` profile，不要在测试中私自切换本地 MySQL/Redis 或 Testcontainers。
+- 涉及共享测试环境时使用 `dev` profile，默认远端地址为 `192.168.3.3`，破坏性测试仅可连接 `admin_base_it`，不要在测试中私自切换本地 MySQL/Redis 或 Testcontainers。
 
 ## 测试策略
 
@@ -423,6 +432,8 @@ mvn test -Dtest=AuthModePropertiesTest,AuthModeSecurityConfigTest,OAuth2Authorit
 # 数据库脚本和 seed
 mvn test -Dtest=SchemaDraftTest,SchemaSeedConsistencyTest,SeedV2LogicCoverageTest
 ```
+
+全接口白盒测试覆盖管理员全接口操作、部分权限用户访问边界、公开接口、错误路径、文件上传下载和操作日志完整性。详细流程和通过标准见 [dev 环境测试流程](docs/testing/dev-test-process.md)。
 ## 代码约定
 
 - 新代码使用 Spring Data JPA repository，不新增 MyBatis Mapper/XML。

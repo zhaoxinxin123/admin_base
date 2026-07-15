@@ -1,6 +1,9 @@
 package com.admin.base.infrastructure.aop;
 
+import com.admin.base.infrastructure.security.CurrentUser;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,7 +15,7 @@ class LogAspectSanitizationTest {
      */
     @Test
     void masksSensitiveJsonFields() {
-        LogAspect aspect = new LogAspect();
+        LogAspect aspect = new LogAspect(() -> new CurrentUser("oauth-admin", null, List.of()));
 
         String result = aspect.sanitizeLogPayload("{\"username\":\"admin\",\"password\":\"secret\",\"token\":\"abc\"}");
 
@@ -21,5 +24,13 @@ class LogAspectSanitizationTest {
         assertThat(result).contains("\"token\":\"***\"");
         assertThat(result).doesNotContain("secret");
         assertThat(result).doesNotContain("abc");
+    }
+
+    @Test
+    void resolvesOperationNameThroughAuthModeNeutralCurrentUserProvider() {
+        LogAspect aspect = new LogAspect(() -> new CurrentUser(
+                "oauth-admin", null, List.of("sys:config:add")));
+
+        assertThat(aspect.currentUsername()).isEqualTo("oauth-admin");
     }
 }

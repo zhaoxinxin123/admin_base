@@ -61,7 +61,14 @@ VALUES
   (6, 1, 2, '/system/log', 'sys:logList', 1, 1, 'log', '操作日志', NOW(), NOW()),
   -- level 3: 日志按钮
   (25, 6, 3, '', 'sys:log:list', 1, 1, '', '日志查询', NOW(), NOW()),
-  (26, 6, 3, '', 'sys:log:delete', 1, 1, '', '日志删除', NOW(), NOW());
+  (26, 6, 3, '', 'sys:log:delete', 1, 1, '', '日志删除', NOW(), NOW()),
+
+  -- level 2: 文件管理
+  (27, 1, 2, '/system/file', 'sys:fileList', 1, 1, 'file', '文件管理', NOW(), NOW()),
+  -- level 3: 通用文件接口按钮
+  (28, 27, 3, '', 'sys:file:upload', 1, 1, '', '文件上传', NOW(), NOW()),
+  (29, 27, 3, '', 'sys:file:download', 1, 1, '', '文件下载', NOW(), NOW()),
+  (30, 27, 3, '', 'sys:file:delete', 1, 1, '', '下载后删除', NOW(), NOW());
 
 -- 角色权限关联（ROLE_ADMIN 拥有全部权限）
 INSERT INTO tb_sys_role_permission (role_id, permission_id, create_time)
@@ -71,7 +78,8 @@ VALUES
   (1, 12, NOW()), (1, 13, NOW()), (1, 14, NOW()), (1, 15, NOW()), (1, 16, NOW()),
   (1, 17, NOW()), (1, 18, NOW()), (1, 19, NOW()), (1, 20, NOW()),
   (1, 21, NOW()), (1, 22, NOW()), (1, 23, NOW()), (1, 24, NOW()),
-  (1, 25, NOW()), (1, 26, NOW());
+  (1, 25, NOW()), (1, 26, NOW()),
+  (1, 27, NOW()), (1, 28, NOW()), (1, 29, NOW()), (1, 30, NOW());
 
 -- 管理员角色关联
 INSERT INTO tb_sys_admin_role (admin_id, role_id, create_time)

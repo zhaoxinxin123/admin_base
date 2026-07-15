@@ -1,11 +1,11 @@
 package com.admin.base.infrastructure.security;
 
 import com.admin.base.BaseApplication;
+import com.admin.base.support.DevRemoteIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -15,11 +15,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * 安全配置测试 — 验证 JWT 安全过滤器链的正确性。
- * 使用 test profile 连接 192.168.3.3 的 MySQL/Redis。
+ * 使用 dev profile 连接远程测试环境的 MySQL/Redis。
  */
 @SpringBootTest(classes = BaseApplication.class)
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
+@DevRemoteIntegrationTest
 class SecurityConfigTest {
 
     @Autowired
