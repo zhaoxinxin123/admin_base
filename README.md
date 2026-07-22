@@ -1,6 +1,7 @@
 # admin_base
 
 `admin_base` 是一个基于 Java 17、Spring Boot 3.5、Spring Data JPA、Spring Security、MySQL 和 Redis 的后台管理基础项目。
+
 ## 技术栈
 
 - Java 17
@@ -19,6 +20,8 @@
 - 本地 JWT 登录：验证码、账号密码登录、Redis token 校验、方法级权限控制。
 - OAuth2 Resource Server：可切换到外部 IdP 签发的 Bearer token。
 - 系统管理：管理员、角色、权限、全局配置、操作日志。
+- 权限边界：25 个受保护接口由可执行权限矩阵校验，文件上传、下载和下载后删除使用独立权限。
+- 业务完整性：权限树禁止形成环并支持递归删除，角色名称执行前缀、长度和唯一性校验。
 - 统一 Web 形状：`JsonResponse`、`PageResult`、全局异常处理、Bean Validation。
 - 持久化：使用 Spring Data JPA repository，数据库结构由 SQL 管理，Hibernate 只做 `ddl-auto=validate`。
 - 基础设施：Redis 缓存、重复提交防护、操作日志 AOP、请求日志、文件上传下载、Actuator 指标。
@@ -99,6 +102,16 @@ mysql -uroot -p -e "CREATE DATABASE IF NOT EXISTS admin_base CHARACTER SET utf8m
 mysql -uroot -p admin_base < docs/database/admin-base-schema-v2.sql
 mysql -uroot -p admin_base < docs/database/admin-base-seed-v2.sql
 ```
+
+集成测试使用独立的可清空数据库 `admin_base_it`。首次运行远程白盒测试前，在测试服务器上初始化：
+
+```bash
+mysql -h192.168.3.3 -uroot -p -e "CREATE DATABASE IF NOT EXISTS admin_base_it CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;"
+mysql -h192.168.3.3 -uroot -p admin_base_it < docs/database/admin-base-schema-v2.sql
+mysql -h192.168.3.3 -uroot -p admin_base_it < docs/database/admin-base-seed-v2.sql
+```
+
+`FullApiAuthorizationIntegrationTest` 会重置核心表，因此只允许连接名称以 `_it` 结尾的数据库。数据库保护器会拒绝 `admin_base` 等非测试库。
 
 当前仓库没有维护增量 migration 脚本；旧库升级时请先备份，再根据 v2 全量 schema 做受控迁移。
 
@@ -190,7 +203,11 @@ http://localhost:9999/admin-api
 | `ADMIN_OAUTH2_USERNAME_CLAIM` | `preferred_username` | OAuth2 用户名 claim |
 | `ADMIN_OAUTH2_AUTHORITIES_CLAIM` | `authorities` | OAuth2 权限 claim |
 | `DEV_DATASOURCE_URL` | 本机 `admin_base` | dev 数据库连接 |
+| `DEV_DATASOURCE_USERNAME` | `root` | dev 数据库用户 |
+| `DEV_DATASOURCE_PASSWORD` | 空 | dev 数据库密码 |
 | `DEV_REDIS_HOST` | `127.0.0.1` | dev Redis 地址 |
+| `DEV_REDIS_PORT` | `6379` | dev Redis 端口 |
+| `DEV_REDIS_PASSWORD` | 空 | dev Redis 密码 |
 | `PROD_DATASOURCE_URL` | 无 | prod 数据库连接，必填 |
 | `PROD_REDIS_HOST` | 无 | prod Redis 地址，必填 |
 | `PROD_UPLOAD_PATH` | 无 | prod 上传目录，必填 |
@@ -221,6 +238,8 @@ export ADMIN_OAUTH2_AUDIENCE='admin-api'
 ```
 
 OAuth2 权限会经过 `OAuth2AuthorityMapper` 归一化后进入 Spring Security。业务代码需要当前用户时，使用 `CurrentUserProvider` 或 `BaseController#getUserName()`，不要假设 principal 一定是本地 `UserDetailsImpl`。
+
+`OAuth2ResourceServerTest` 会启动测试用 OIDC discovery/JWKS 服务，使用真实 RSA 签名 JWT 验证 issuer、audience、权限映射和 OAuth2 操作日志用户名，不使用模拟 `JwtDecoder`。
 
 更多配置见 [OAuth2 Provider Setup](docs/modernization/oauth2-provider-setup.md)。
 
@@ -299,6 +318,15 @@ curl -s -X POST http://localhost:9999/admin-api/admin/getMenu \
 | 操作日志 | `POST /sys_operation_log/deleteBatch` | 批量删除操作日志 |
 | 文件 | `POST /common/upload` | 上传文件 |
 | 文件 | `GET /common/download` | 下载文件 |
+| 文件 | `GET /common/download/resource2` | 本地资源下载 |
+
+文件接口权限：
+
+| 接口 | 所需权限 |
+| --- | --- |
+| `POST /common/upload` | `sys:file:upload` |
+| `GET /common/download` | `sys:file:download`；`delete=true` 时还需要 `sys:file:delete` |
+| `GET /common/download/resource2` | `sys:file:download` |
 
 如果接口返回无权限，检查三处是否一致：
 
@@ -327,6 +355,8 @@ mvn test -Dtest=SchemaDraftTest,SchemaSeedConsistencyTest,SeedV2LogicCoverageTes
 - 有 `create_time`、`update_time` 的实体继承 `AuditableEntity`。
 - seed SQL 必须写入审计列，避免 MySQL strict mode 下插入失败。
 - 权限 seed 变更时，补 seed 驱动逻辑覆盖测试。
+- 权限节点更新时不能把自身或后代设置为父节点；删除节点会递归删除整棵子树及角色权限关联。
+- 角色名必须以 `ROLE_` 开头、总长度不超过 10，并在新增和更新时保持唯一。
 
 ## 新增业务模块
 
@@ -431,9 +461,13 @@ mvn test -Dtest=AuthModePropertiesTest,AuthModeSecurityConfigTest,OAuth2Authorit
 
 # 数据库脚本和 seed
 mvn test -Dtest=SchemaDraftTest,SchemaSeedConsistencyTest,SeedV2LogicCoverageTest
+
+# 精确权限、文件、权限树、角色及测试库保护
+mvn test -Dtest=ApiPermissionMatrixTest,CommonControllerTest,PermissionsServiceImplTest,RoleServiceImplTest,DestructiveTestDatabaseGuardTest
 ```
 
-全接口白盒测试覆盖管理员全接口操作、部分权限用户访问边界、公开接口、错误路径、文件上传下载和操作日志完整性。详细流程和通过标准见 [dev 环境测试流程](docs/testing/dev-test-process.md)。
+全接口白盒测试覆盖管理员全接口操作、仅拥有 `sys:adminList` 的受限用户、公开接口、错误路径、文件内容/响应头/删除行为和操作日志完整性。`ApiPermissionMatrixTest` 固化全部 25 个受保护接口的权限表达式。详细流程和通过标准见 [dev 环境测试流程](docs/testing/dev-test-process.md)。
+
 ## 代码约定
 
 - 新代码使用 Spring Data JPA repository，不新增 MyBatis Mapper/XML。
