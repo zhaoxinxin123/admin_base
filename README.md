@@ -28,45 +28,73 @@
 
 ## 项目结构
 
+仓库中的主要目录和文档如下：
+
+```text
+admin_base/
+├── docs/
+│   ├── api/                      # 可导入 Apifox 的 OpenAPI 文档
+│   ├── database/                 # v2 全量 schema 与 seed
+│   ├── superpowers/              # 安全测试改造的设计与实施记录
+│   └── testing/                  # dev 环境标准测试流程
+├── src/
+│   ├── main/
+│   │   ├── java/                 # 应用源码
+│   │   └── resources/            # application*.yml
+│   └── test/java/                # 单元、边界和集成测试
+├── AGENTS.md                     # 本仓库的开发代理规则
+├── README.md
+└── pom.xml
+```
+
+Java 主代码的实际包结构如下：
+
 ```text
 src/main/java/com/admin/base
+├── BaseApplication.java          # Spring Boot 启动类
 ├── auth/                         # 登录、验证码、认证 DTO 和开放接口
-│   ├── dto/
-│   └── controller/               # CaptchaController、LoginController
+│   ├── controller/               # CaptchaController、LoginController
+│   └── dto/                      # CaptchaResponse、LoginParam、LoginResponse
 ├── infrastructure/               # 横切基础设施
-│   ├── aop/                      # @Log、@RequestLogs、@RepeatInvoke 及切面
-│   ├── async/                    # 异步任务管理
+│   ├── aop/                      # 日志、请求记录、重复调用防护及 annotation/
+│   ├── async/                    # 异步任务管理及 factory/
 │   ├── cache/                    # Redis 缓存与锁
-│   ├── config/                   # Spring、Security、JPA、Redis、Druid 配置
+│   ├── config/                   # Bean、CORS、时间序列化、Redis 和 SysConfig
 │   ├── controller/               # BaseController、CommonController
 │   ├── filter/                   # MyTokenFilter、XssHttpServletRequestWrapper
-│   └── security/                 # JWT/OAuth2、当前用户抽象、权限映射
+│   └── security/                 # JWT/OAuth2、用户加载、当前用户抽象、权限映射
 ├── shared/                       # 通用 API、常量、异常、实体基类、工具类
-│   ├── api/
+│   ├── api/                      # JsonResponse、分页模型及 dto/
 │   ├── constant/
-│   ├── entity/                   # AuditableEntity、CommonDate 等 JPA 基类
+│   ├── entity/                   # AuditableEntity、CommonDate JPA 基类
 │   ├── exception/
-│   ├── factory/                  # EntityFactory、ResponseFactory 等对象装配工厂
+│   ├── factory/                  # EntityFactory、ResponseFactory 对象装配工厂
 │   └── util/
 ├── system/                       # 系统管理业务域
-│   ├── admin/
-│   ├── config/
-│   ├── log/
-│   ├── permission/
-│   └── role/
-│       ├── controller/           # REST Controller
-│       ├── dto/                  # request/response DTO
-│       ├── entity/               # JPA Entity
-│       ├── repository/           # Spring Data JPA repository
-│       └── service/              # Service 接口与实现
-│           └── impl/
-└── user/                         # Spring Security 用户加载与用户 DTO
+│   ├── admin/                    # 管理员与管理员角色关系
+│   ├── config/                   # 全局配置
+│   ├── log/                      # 操作日志
+│   ├── permission/               # 权限树
+│   └── role/                     # 角色与角色权限关系
+└── user/                         # 用户查询 DTO 与服务
     ├── dto/
     └── service/
         └── impl/
 ```
 
-每个业务模块优先采用 `controller -> service -> repository/entity` 的调用方向：Controller 只做入参校验和响应包装，业务规则放在 Service，数据库访问放在 Repository。
+`system` 下的五个模块都各自拥有完整分层，不是只有 `role` 模块分层：
+
+```text
+system/<module>/
+├── controller/                   # REST Controller
+├── dto/                          # 请求和响应 DTO
+├── entity/                       # JPA Entity
+├── repository/                   # Spring Data JPA Repository
+└── service/                      # Service 接口
+    └── impl/                     # Service 实现
+```
+
+业务模块采用 `controller -> service -> repository/entity` 的调用方向：Controller 只做入参校验和响应包装，业务规则放在 Service，数据库访问放在 Repository。Spring Security 的用户加载实现位于 `infrastructure/security/UserDetailsServiceImpl`；`user` 包只负责用户查询 DTO 与服务。
 
 ## 快速开始
 
@@ -84,7 +112,9 @@ src/main/java/com/admin/base
 - 默认 profile：`test`
 - 默认认证模式：`jwt`
 
-当前集成测试采用 `dev` profile，并默认连接共享测试环境 `192.168.3.3` 上的 MySQL 和 Redis。破坏性全接口测试只允许使用一次性数据库 `admin_base_it`，保护器会拒绝任何非 `_it` 数据库。不要为了测试启动本地 MySQL 或 Redis；如环境地址变化，用 `DEV_*` 环境变量覆盖。
+默认启动会读取 `application-test.yml`，其默认数据源是共享测试服务器上的 `mark-test`。手工开发建议显式使用 `dev` profile；`application-dev.yml` 默认连接本机的 `admin_base` 和 Redis。
+
+仓库中的远程集成测试同样声明为 `dev` profile，但通过 `DevRemoteIntegrationTest` 覆盖为 `192.168.3.3` 上的 MySQL/Redis 和 `admin_base_it`。破坏性全接口测试只允许使用名称以 `_it` 结尾的数据库。不要为了执行这些测试启动本地 MySQL 或 Redis；环境变化时使用 `DEV_*` 变量覆盖。
 
 ### 2. 创建数据库并导入数据
 
@@ -130,9 +160,9 @@ mysql -h192.168.3.3 -uroot -p admin_base_it < docs/database/admin-base-seed-v2.s
 - 表结构由 SQL 维护，应用启动时只做实体校验。
 - 新增或修改 seed 权限时，同步更新角色权限关联和测试覆盖。
 
-### 3. 配置本地运行参数
+### 3. 配置运行参数
 
-`dev` profile 默认连接本机 MySQL/Redis，也可以用环境变量覆盖：
+手工使用 `dev` profile 时默认连接本机 MySQL/Redis，也可以用环境变量覆盖：
 
 ```bash
 export SPRING_PROFILES_ACTIVE=dev
@@ -172,10 +202,10 @@ mvn test -Dtest=SeedV2LogicCoverageTest
 mvn test -Dtest=FullApiAuthorizationIntegrationTest
 mvn test -Dtest=OAuth2AuthorityMapperTest,OAuth2AudienceValidatorTest,OAuth2PropertiesTest,AuthModeSecurityConfigTest,OAuth2ResourceServerTest
 
-# 启动，默认 profile 为 test
+# 启动默认 test profile；会读取 application-test.yml
 mvn spring-boot:run
 
-# 启动 dev profile
+# 推荐的手工开发启动方式
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
@@ -188,6 +218,15 @@ http://localhost:9999/admin-api
 ```
 
 ## 配置说明
+
+各 profile 的数据源边界：
+
+| 使用场景 | 生效配置 | 默认 MySQL | 默认 Redis |
+| --- | --- | --- | --- |
+| 默认启动 | `application-test.yml` | `192.168.3.3:3306/mark-test` | `192.168.3.3:6379` |
+| 手工 `dev` 启动 | `application-dev.yml` | `127.0.0.1:3306/admin_base` | `127.0.0.1:6379` |
+| 远程集成测试 | `dev` + `DevRemoteIntegrationTest` | `192.168.3.3:3306/admin_base_it` | `192.168.3.3:6379` |
+| 生产启动 | `application-prod.yml` | 必须通过环境变量提供 | 必须通过环境变量提供 |
 
 常用环境变量：
 
@@ -202,6 +241,12 @@ http://localhost:9999/admin-api
 | `ADMIN_OAUTH2_AUDIENCE` | `admin-api` | JWT audience 校验值 |
 | `ADMIN_OAUTH2_USERNAME_CLAIM` | `preferred_username` | OAuth2 用户名 claim |
 | `ADMIN_OAUTH2_AUTHORITIES_CLAIM` | `authorities` | OAuth2 权限 claim |
+| `TEST_DATASOURCE_URL` | 远程 `mark-test` | test 数据库连接 |
+| `TEST_DATASOURCE_USERNAME` | `root` | test 数据库用户 |
+| `TEST_DATASOURCE_PASSWORD` | 配置文件测试值 | test 数据库密码，建议通过环境变量覆盖 |
+| `TEST_REDIS_HOST` | `192.168.3.3` | test Redis 地址 |
+| `TEST_REDIS_PORT` | `6379` | test Redis 端口 |
+| `TEST_REDIS_PASSWORD` | 配置文件测试值 | test Redis 密码，建议通过环境变量覆盖 |
 | `DEV_DATASOURCE_URL` | 本机 `admin_base` | dev 数据库连接 |
 | `DEV_DATASOURCE_USERNAME` | `root` | dev 数据库用户 |
 | `DEV_DATASOURCE_PASSWORD` | 空 | dev 数据库密码 |
@@ -209,7 +254,11 @@ http://localhost:9999/admin-api
 | `DEV_REDIS_PORT` | `6379` | dev Redis 端口 |
 | `DEV_REDIS_PASSWORD` | 空 | dev Redis 密码 |
 | `PROD_DATASOURCE_URL` | 无 | prod 数据库连接，必填 |
+| `PROD_DATASOURCE_USERNAME` | 无 | prod 数据库用户，必填 |
+| `PROD_DATASOURCE_PASSWORD` | 无 | prod 数据库密码，必填 |
 | `PROD_REDIS_HOST` | 无 | prod Redis 地址，必填 |
+| `PROD_REDIS_PORT` | `6379` | prod Redis 端口 |
+| `PROD_REDIS_PASSWORD` | 空 | prod Redis 密码 |
 | `PROD_UPLOAD_PATH` | 无 | prod 上传目录，必填 |
 | `PROD_DOWNLOAD_PATH` | 无 | prod 下载目录，必填 |
 | `PROD_LOCAL_STORE` | 无 | prod 本地存储目录，必填 |
@@ -229,19 +278,18 @@ http://localhost:9999/admin-api
 
 ### OAuth2 模式
 
-设置 `ADMIN_AUTH_MODE=oauth2` 后，应用作为 OAuth2/OIDC Resource Server 接收外部 IdP 签发的 Bearer token。
+使用 `dev` 或 `prod` profile 并设置 `ADMIN_AUTH_MODE=oauth2` 后，应用作为 OAuth2/OIDC Resource Server 接收外部 IdP 签发的 Bearer token。`application-test.yml` 将认证模式固定为 `jwt`，不要用默认 test profile 验证 OAuth2 运行模式。
 
 ```bash
 export ADMIN_AUTH_MODE=oauth2
 export ADMIN_OAUTH2_ISSUER_URI='https://issuer.example.com/'
 export ADMIN_OAUTH2_AUDIENCE='admin-api'
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-OAuth2 权限会经过 `OAuth2AuthorityMapper` 归一化后进入 Spring Security。业务代码需要当前用户时，使用 `CurrentUserProvider` 或 `BaseController#getUserName()`，不要假设 principal 一定是本地 `UserDetailsImpl`。
+IdP 必须提供与 issuer 匹配的 OIDC discovery/JWKS，并在 JWT 中提供配置的 audience、用户名 claim 和权限 claim。OAuth2 权限会经过 `OAuth2AuthorityMapper` 归一化后进入 Spring Security。业务代码需要当前用户时，使用 `CurrentUserProvider` 或 `BaseController#getUserName()`，不要假设 principal 一定是本地 `UserDetailsImpl`。
 
 `OAuth2ResourceServerTest` 会启动测试用 OIDC discovery/JWKS 服务，使用真实 RSA 签名 JWT 验证 issuer、audience、权限映射和 OAuth2 操作日志用户名，不使用模拟 `JwtDecoder`。
-
-更多配置见 [OAuth2 Provider Setup](docs/modernization/oauth2-provider-setup.md)。
 
 ## 接口测试
 
@@ -260,7 +308,7 @@ token = 登录接口返回的 data.token
 curl -s http://localhost:9999/admin-api/open/captchaImage | jq
 ```
 
-响应包含 `uuid` 和 base64 图片。开发环境当前响应中也包含验证码临时值，接口联调时可直接使用；生产环境不应依赖该字段。
+当前实现的响应包含 `uuid`、base64 图片 `img` 和测试字段 `tmpVar`，并会把验证码写入应用日志；该行为没有按 profile 隔离。`tmpVar` 可用于当前接口联调，但生产部署前必须移除响应字段和明文日志，客户端不得依赖它。
 
 ### 2. 登录获取 token
 
@@ -288,7 +336,7 @@ curl -s -X POST http://localhost:9999/admin-api/admin/getMenu \
   -H "Authorization: Bearer ${ADMIN_TOKEN}" | jq
 ```
 
-常用系统接口：
+当前全部 REST 接口：
 
 | 模块 | 接口 | 说明 |
 | --- | --- | --- |
@@ -437,6 +485,8 @@ src/main/java/com/admin/base/system/notice
 - 涉及共享测试环境时使用 `dev` profile，默认远端地址为 `192.168.3.3`，破坏性测试仅可连接 `admin_base_it`，不要在测试中私自切换本地 MySQL/Redis 或 Testcontainers。
 
 ## 测试策略
+
+测试分为三类：不依赖外部服务的单元/边界测试、连接远程 MySQL/Redis 的 `dev` 集成测试，以及使用本地测试 JWKS HTTP 服务但不依赖外部 IdP 的 OAuth2 资源服务器测试。执行全量测试时不启动本地 MySQL 或 Redis。
 
 常用测试：
 
